@@ -494,11 +494,20 @@ async function loadListActivity(wallets, hours) {
    pinned to the extremes is over in practice — no edge left to copy, and its
    long-settled loss has no business in a P&L for open bets. */
 const DECIDED_LOW = 0.01, DECIDED_HIGH = 0.99;
+const COLLAPSED = 0.15;
 function isLive(p) {
   if (p.redeemable === true) return false;
   if ((Number(p.currentValue) || 0) <= 0) return false;
   const price = Number(p.curPrice) || 0;
-  return price >= DECIDED_LOW && price <= DECIDED_HIGH;
+  if (price < DECIDED_LOW || price > DECIDED_HIGH) return false;
+  // Also over in practice: a bet that has lost nearly all its value while its
+  // market stays technically open. Judged against ENTRY rather than an absolute
+  // floor, so a longshot bought at 3¢ and still at 3¢ survives while 2¢ bought
+  // at 40¢ does not. Across the top 40 wallets these came to 1.4% of the book
+  // but 60% of the unrealised loss.
+  const avg = Number(p.avgPrice) || 0;
+  if (avg > 0 && price / avg < COLLAPSED) return false;
+  return true;
 }
 
 function aggregateHoldings(perWallet, weightMode) {

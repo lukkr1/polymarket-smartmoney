@@ -92,6 +92,14 @@ carrying $661k of "unrealised" loss — 292 dead bets it had never redeemed.
 Counted naively, that single graveyard set the headline number for the whole
 group. So anything pinned to 0¢ or 100¢ is excluded: those markets are over.
 
+**So are collapsed positions.** A bet can sit at 2¢ with its market technically
+open and still be finished in every practical sense. Across the top 40 wallets,
+positions now worth less than 15% of what was paid for them were 1.4% of the book
+but **60% of the unrealised loss** — enough to make the headline number
+meaningless. The test is deliberately relative to entry rather than an absolute
+price floor: a longshot bought at 3¢ and still trading at 3¢ is a live idea and
+stays, while 2¢ bought at 40¢ is a broken thesis and goes.
+
 **Agreement is ranked ahead of price.** It's tempting to treat "the price is now
 below what they paid" as a discount and sort by it. That inverts the list — it
 floats the group's *worst* positions to the top, because a price falling away

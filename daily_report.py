@@ -24,6 +24,7 @@ DATA = "https://data-api.polymarket.com"
 # A position pinned to either extreme is over in practice: no edge left to copy,
 # and its long-settled loss would otherwise swamp the P&L.
 DECIDED_LOW, DECIDED_HIGH = 0.01, 0.99
+COLLAPSED = 0.15        # price below 15% of entry = thesis broken, treat as over
 DUST = 500.0            # ignore positions too small to signal conviction
 MIN_CONSENSUS = 3       # how many wallets must independently agree
 
@@ -88,7 +89,18 @@ def is_live(p):
     if float(p.get("currentValue") or 0) <= 0:
         return False
     price = float(p.get("curPrice") or 0)
-    return DECIDED_LOW <= price <= DECIDED_HIGH
+    if not (DECIDED_LOW <= price <= DECIDED_HIGH):
+        return False
+    # A bet that has lost almost all its value is over in practice, even though
+    # the market is technically open and the price is above zero. Measured
+    # against ENTRY, not against an absolute floor: a longshot bought at 3c and
+    # still at 3c is a live idea, while 2c bought at 40c is a broken thesis.
+    # Across the top 40 wallets these were 1.4% of the book but 60% of the
+    # unrealised loss, so counting them buries every honest number.
+    avg = float(p.get("avgPrice") or 0)
+    if avg > 0 and price / avg < COLLAPSED:
+        return False
+    return True
 
 
 def aggregate(fetched):
