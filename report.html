@@ -1,0 +1,391 @@
+<title>Smart Money Daily</title>
+<style>
+:root{--ground:#F7F8F7;--surface:#FFF;--surface-2:#F0F3F1;--line:#DCE3DF;
+--ink:#12201C;--ink-2:#4A5C55;--ink-3:#7A8A83;--accent:#0E7C66;--accent-soft:#E2F0EB;
+--pos:#1A7F4B;--neg:#B4453A;--warn:#B0761E;--pos-soft:#E4F1E8;--neg-soft:#F8E7E4;
+--mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,monospace;
+--sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--ground:#0E1513;--surface:#16201D;--surface-2:#1C2723;--line:#2A3733;
+--ink:#E8EFEB;--ink-2:#A3B3AC;--ink-3:#74857E;--accent:#4FC0A3;--accent-soft:#17332C;
+--pos:#52C07E;--neg:#E2796C;--warn:#D9A44A;--pos-soft:#142E20;--neg-soft:#331C19}}
+:root[data-theme="dark"]{--ground:#0E1513;--surface:#16201D;--surface-2:#1C2723;
+--line:#2A3733;--ink:#E8EFEB;--ink-2:#A3B3AC;--ink-3:#74857E;--accent:#4FC0A3;
+--accent-soft:#17332C;--pos:#52C07E;--neg:#E2796C;--warn:#D9A44A;
+--pos-soft:#142E20;--neg-soft:#331C19}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
+font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1120px;margin:0 auto;padding:34px 20px 60px;
+display:flex;flex-direction:column;gap:22px}
+header h1{margin:0 0 4px;font-size:23px;font-weight:650;letter-spacing:-.02em}
+header .when{font-family:var(--mono);font-size:11px;color:var(--ink-3);
+text-transform:uppercase;letter-spacing:.09em}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:5px;
+padding:11px 13px}
+.stat dt{margin:0;font-family:var(--mono);font-size:9.5px;font-weight:600;
+text-transform:uppercase;letter-spacing:.1em;color:var(--ink-3)}
+.stat dd{margin:2px 0 0;font-family:var(--mono);font-size:19px;font-weight:600;
+font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.stat .sub{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;
+overflow:hidden}
+.panel-head{padding:12px 15px;border-bottom:1px solid var(--line);
+display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.panel-head h2{margin:0;font-size:13.5px;font-weight:620}
+.panel-head p{margin:0;font-size:12px;color:var(--ink-3)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--surface-2);font-family:var(--mono);font-size:9.5px;
+font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);
+text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:none}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right;
+white-space:nowrap}
+th.num{text-align:right}
+.pos{color:var(--pos)}.neg{color:var(--neg)}.dim{color:var(--ink-3)}
+.mkt{min-width:250px;max-width:430px}
+.mkt a{color:var(--ink);text-decoration:none;font-weight:500}
+.mkt a:hover{color:var(--accent);text-decoration:underline}
+.mkt .sub{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+.pill{display:inline-block;padding:1px 7px;border-radius:3px;font-family:var(--mono);
+font-size:10.5px;font-weight:600;white-space:nowrap}
+.pill-yes{background:var(--pos-soft);color:var(--pos)}
+.pill-no{background:var(--neg-soft);color:var(--neg)}
+.pill-other{background:var(--surface-2);color:var(--ink-2)}
+.pill-accent{background:var(--accent-soft);color:var(--accent)}
+.pill-warn{background:var(--surface-2);color:var(--warn)}
+.dots{display:inline-flex;gap:2px;align-items:center;justify-content:flex-end}
+.dots i{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.dots .more{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin-left:3px}
+.note{background:var(--surface-2);border:1px solid var(--line);
+border-left:2px solid var(--warn);border-radius:4px;padding:11px 14px;
+font-size:12.5px;color:var(--ink-2)}
+.note b{color:var(--ink)}
+footer{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+border-top:1px solid var(--line);padding-top:14px}
+</style>
+<div class="wrap">
+<header>
+<h1>Where Polymarket's sharpest money sits today</h1>
+<div class="when">Generated 12 Aug 2026, 17:30 UTC · top 40 wallets by 30-day profit</div>
+</header>
+
+<dl class="stats">
+<div class="stat"><dt>Wallets read</dt><dd>33</dd>
+<span class="sub">of 40 ranked</span></div>
+<div class="stat"><dt>Live book</dt><dd>$5.98M</dd>
+<span class="sub">open bets only</span></div>
+<div class="stat"><dt>Open bets</dt><dd>3,536</dd>
+<span class="sub">2,222 decided, excluded</span></div>
+<div class="stat"><dt>Agreed positions</dt><dd>118</dd>
+<span class="sub">3+ wallets on one side</span></div>
+<div class="stat"><dt>Unrealised P&amp;L</dt>
+<dd class="neg">-$1.30M</dd>
+<span class="sub">on those open bets</span></div>
+</dl>
+
+<div class="panel">
+<div class="panel-head"><h2>Where the money agrees</h2>
+<p>118 positions held by 3+ of the top wallets</p></div>
+<div class="scroll"><table><thead><tr>
+<th class="num">#</th><th>Market</th><th>Side</th><th class="num">Wallets</th>
+<th class="num">Share</th><th class="num">Value</th><th class="num">They paid</th>
+<th class="num">Now</th><th class="num">vs entry</th><th>Read</th>
+</tr></thead><tbody><tr>
+<td class="num dim">1</td>
+<td class="mkt"><a href="https://polymarket.com/event/cs2-vit-100t-2026-08-12" target="_blank" rel="noopener noreferrer">Counter-Strike: Vitality vs 100 Thieves (BO1) - Esports World Cup Group C</a>
+<div class="sub">ends 2026-08-13</div></td>
+<td><span class="pill pill-other">100 Thieves</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><span class="more">3</span></span></td>
+<td class="num">8.97%</td>
+<td class="num">$536.7k</td>
+<td class="num dim">27.5¢</td>
+<td class="num">28.5¢</td>
+<td class="num neg">-4%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">2</td>
+<td class="mkt"><a href="https://polymarket.com/event/atp-smith-gill-2026-08-10" target="_blank" rel="noopener noreferrer">Brownsburg: Colton Smith vs Felix Gill</a>
+<div class="sub">ends 2026-08-17</div></td>
+<td><span class="pill pill-other">Colton Smith</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.27%</td>
+<td class="num">$16.0k</td>
+<td class="num dim">59.5¢</td>
+<td class="num">59.5¢</td>
+<td class="num pos">+0%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">3</td>
+<td class="mkt"><a href="https://polymarket.com/event/mlb-sea-nyy-2026-08-12" target="_blank" rel="noopener noreferrer">Seattle Mariners vs. New York Yankees: O/U 8.5</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Under</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.17%</td>
+<td class="num">$10.4k</td>
+<td class="num dim">48.0¢</td>
+<td class="num">47.5¢</td>
+<td class="num pos">+1%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">4</td>
+<td class="mkt"><a href="https://polymarket.com/event/usc-psg-av-2026-08-12" target="_blank" rel="noopener noreferrer">Will Paris Saint-Germain win on 2026-08-12?</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-yes">Yes</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><span class="more">3</span></span></td>
+<td class="num">5.69%</td>
+<td class="num">$340.5k</td>
+<td class="num dim">56.9¢</td>
+<td class="num">56.5¢</td>
+<td class="num pos">+1%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">5</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-rap-pai-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">SK Rapid Wien vs. Paide Linnameeskond: O/U 1.5</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Over</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.05%</td>
+<td class="num">$3.2k</td>
+<td class="num dim">79.9¢</td>
+<td class="num">71.5¢</td>
+<td class="num pos">+10%</td>
+<td><span class="pill pill-accent">below their entry</span></td></tr><tr>
+<td class="num dim">6</td>
+<td class="mkt"><a href="https://polymarket.com/event/mlb-phi-stl-2026-08-12" target="_blank" rel="noopener noreferrer">Philadelphia Phillies vs. St. Louis Cardinals: O/U 7.5</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Under</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">1.11%</td>
+<td class="num">$66.3k</td>
+<td class="num dim">47.0¢</td>
+<td class="num">46.5¢</td>
+<td class="num pos">+1%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">7</td>
+<td class="mkt"><a href="https://polymarket.com/event/atp-blanche-sakamot-2026-08-10" target="_blank" rel="noopener noreferrer">Brownsburg: Ugo Blanchet vs Rei Sakamoto</a>
+<div class="sub">ends 2026-08-17</div></td>
+<td><span class="pill pill-other">Rei Sakamoto</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.11%</td>
+<td class="num">$6.6k</td>
+<td class="num dim">48.5¢</td>
+<td class="num">42.0¢</td>
+<td class="num pos">+13%</td>
+<td><span class="pill pill-accent">below their entry</span></td></tr><tr>
+<td class="num dim">8</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-kat-hta-2026-08-12" target="_blank" rel="noopener noreferrer">Will GKS GieKSa Katowice win on 2026-08-12?</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-no">No</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.29%</td>
+<td class="num">$17.1k</td>
+<td class="num dim">79.4¢</td>
+<td class="num">92.5¢</td>
+<td class="num neg">-17%</td>
+<td><span class="pill pill-other">moved up</span></td></tr><tr>
+<td class="num dim">9</td>
+<td class="mkt"><a href="https://polymarket.com/event/atp-smith-gill-2026-08-10" target="_blank" rel="noopener noreferrer">Brownsburg: Colton Smith vs Felix Gill</a>
+<div class="sub">ends 2026-08-17</div></td>
+<td><span class="pill pill-other">Felix Gill</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">0.05%</td>
+<td class="num">$2.9k</td>
+<td class="num dim">40.5¢</td>
+<td class="num">40.5¢</td>
+<td class="num pos">+0%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">10</td>
+<td class="mkt"><a href="https://polymarket.com/event/wnba-tor-dal-2026-08-12" target="_blank" rel="noopener noreferrer">Spread: Dallas Wings (-9.5)</a>
+<div class="sub">ends 2026-08-13</div></td>
+<td><span class="pill pill-other">Dallas Wings</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">0.08%</td>
+<td class="num">$4.8k</td>
+<td class="num dim">50.6¢</td>
+<td class="num">50.5¢</td>
+<td class="num pos">+0%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">11</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-rap-pai-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">Spread: SK Rapid Wien (-1.5)</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">SK Rapid Wien</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">0.01%</td>
+<td class="num">$555</td>
+<td class="num dim">60.2¢</td>
+<td class="num">60.0¢</td>
+<td class="num pos">+0%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">12</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-kob-deb-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">FC København vs. Debreceni VSC: O/U 5.5</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Under</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">0.02%</td>
+<td class="num">$950</td>
+<td class="num dim">91.1¢</td>
+<td class="num">92.5¢</td>
+<td class="num neg">-2%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">13</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-kob-deb-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">Spread: FC København (-1.5)</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">FC København</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.10%</td>
+<td class="num">$5.8k</td>
+<td class="num dim">62.9¢</td>
+<td class="num">51.0¢</td>
+<td class="num pos">+19%</td>
+<td><span class="pill pill-accent">below their entry</span></td></tr><tr>
+<td class="num dim">14</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-kob-deb-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">FC København vs. Debreceni VSC: O/U 4.5</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Under</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">0.02%</td>
+<td class="num">$1.3k</td>
+<td class="num dim">72.1¢</td>
+<td class="num">69.5¢</td>
+<td class="num pos">+4%</td>
+<td><span class="pill pill-yes">near their entry</span></td></tr><tr>
+<td class="num dim">15</td>
+<td class="mkt"><a href="https://polymarket.com/event/clf-eve-new-2026-08-12" target="_blank" rel="noopener noreferrer">Will Everton FC vs. Newcastle United end in a draw?</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-yes">Yes</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">0.02%</td>
+<td class="num">$919</td>
+<td class="num dim">14.6¢</td>
+<td class="num">15.5¢</td>
+<td class="num neg">-6%</td>
+<td><span class="pill pill-other">moved up</span></td></tr><tr>
+<td class="num dim">16</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-rap-pai-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">Spread: SK Rapid Wien (-2.5)</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Paide Linnameeskond</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.03%</td>
+<td class="num">$1.5k</td>
+<td class="num dim">60.5¢</td>
+<td class="num">74.5¢</td>
+<td class="num neg">-23%</td>
+<td><span class="pill pill-other">moved up</span></td></tr><tr>
+<td class="num dim">17</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-rap-pai-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">SK Rapid Wien vs. Paide Linnameeskond: O/U 3.5</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Under</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.22%</td>
+<td class="num">$12.9k</td>
+<td class="num dim">58.4¢</td>
+<td class="num">88.5¢</td>
+<td class="num neg">-52%</td>
+<td><span class="pill pill-warn">move already happened</span></td></tr><tr>
+<td class="num dim">18</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-rap-pai-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">Spread: SK Rapid Wien (-1.5)</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Paide Linnameeskond</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">0.05%</td>
+<td class="num">$2.9k</td>
+<td class="num dim">43.3¢</td>
+<td class="num">40.0¢</td>
+<td class="num pos">+8%</td>
+<td><span class="pill pill-accent">below their entry</span></td></tr><tr>
+<td class="num dim">19</td>
+<td class="mkt"><a href="https://polymarket.com/event/mlb-atl-cws-2026-06-11" target="_blank" rel="noopener noreferrer">Atlanta Braves vs. Chicago White Sox: O/U 8.5</a>
+<div class="sub">ends 2026-08-20</div></td>
+<td><span class="pill pill-other">Over</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">1.41%</td>
+<td class="num">$84.5k</td>
+<td class="num dim">51.2¢</td>
+<td class="num">59.5¢</td>
+<td class="num neg">-16%</td>
+<td><span class="pill pill-other">moved up</span></td></tr><tr>
+<td class="num dim">20</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-kob-deb-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">FC København vs. Debreceni VSC: O/U 3.5</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Over</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.15%</td>
+<td class="num">$9.1k</td>
+<td class="num dim">47.8¢</td>
+<td class="num">67.5¢</td>
+<td class="num neg">-41%</td>
+<td><span class="pill pill-warn">move already happened</span></td></tr><tr>
+<td class="num dim">21</td>
+<td class="mkt"><a href="https://polymarket.com/event/atp-izquier-mrva-2026-08-12" target="_blank" rel="noopener noreferrer">Todi: Nikolas Sanchez Izquierdo vs Maxim Mrva</a>
+<div class="sub">ends 2026-08-19</div></td>
+<td><span class="pill pill-other">Nikolas Sanchez Izquierdo</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.13%</td>
+<td class="num">$7.7k</td>
+<td class="num dim">70.4¢</td>
+<td class="num">41.5¢</td>
+<td class="num pos">+41%</td>
+<td><span class="pill pill-warn">down hard since they bought</span></td></tr><tr>
+<td class="num dim">22</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-kat-hta-2026-08-12" target="_blank" rel="noopener noreferrer">Will MH Hapoel Tel Aviv win on 2026-08-12?</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-no">No</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.05%</td>
+<td class="num">$3.3k</td>
+<td class="num dim">45.7¢</td>
+<td class="num">31.5¢</td>
+<td class="num pos">+31%</td>
+<td><span class="pill pill-warn">down hard since they bought</span></td></tr><tr>
+<td class="num dim">23</td>
+<td class="mkt"><a href="https://polymarket.com/event/the-international-2026-winner-20260629212545745" target="_blank" rel="noopener noreferrer">Will Team Liquid Win The International 2026?</a>
+<div class="sub">ends 1970-01-01</div></td>
+<td><span class="pill pill-yes">Yes</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.02%</td>
+<td class="num">$1.1k</td>
+<td class="num dim">50.0¢</td>
+<td class="num">6.0¢</td>
+<td class="num pos">+88%</td>
+<td><span class="pill pill-warn">down hard since they bought</span></td></tr><tr>
+<td class="num dim">24</td>
+<td class="mkt"><a href="https://polymarket.com/event/col-kat-hta-2026-08-12-more-markets" target="_blank" rel="noopener noreferrer">GKS GieKSa Katowice vs. MH Hapoel Tel Aviv: O/U 2.5</a>
+<div class="sub">ends 2026-08-12</div></td>
+<td><span class="pill pill-other">Over</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><i></i><span class="more">5</span></span></td>
+<td class="num">0.02%</td>
+<td class="num">$940</td>
+<td class="num dim">43.0¢</td>
+<td class="num">28.5¢</td>
+<td class="num pos">+34%</td>
+<td><span class="pill pill-warn">down hard since they bought</span></td></tr><tr>
+<td class="num dim">25</td>
+<td class="mkt"><a href="https://polymarket.com/event/mlb-bos-nyy-2026-06-06" target="_blank" rel="noopener noreferrer">Boston Red Sox vs. New York Yankees</a>
+<div class="sub">ends 2026-09-05</div></td>
+<td><span class="pill pill-other">New York Yankees</span></td>
+<td class="num"><span class="dots"><i></i><i></i><i></i><i></i><span class="more">4</span></span></td>
+<td class="num">0.18%</td>
+<td class="num">$10.8k</td>
+<td class="num dim">50.3¢</td>
+<td class="num">45.5¢</td>
+<td class="num pos">+10%</td>
+<td><span class="pill pill-accent">below their entry</span></td></tr></tbody></table></div></div>
+
+<div class="note"><b>How to read this.</b> Agreement comes first: several of the
+most profitable wallets independently holding the same side, with real money
+behind it. <b>vs entry</b> compares today's price to what they paid — near zero
+is the sweet spot. A large positive number means the price fell away from them,
+which usually means the market learned something they hadn't, so treat it as a
+warning rather than a discount. A large negative number means the move already
+happened and you would be buying in late.</div>
+
+<div class="note"><b>What this cannot tell you.</b> These wallets are ranked by
+raw profit, which tracks bankroll size as much as skill, and a 30-day window
+cannot separate skill from luck. Copying a position always means entering at a
+worse price than they got, and you cannot see their hedges, their bankroll, or
+why they took the bet. This is a research shortlist, not advice.</div>
+
+<footer><a href="index.html" style="color:var(--accent)">Open the live tracker</a>
+· Source: Polymarket public API (lb-api leaderboard, data-api positions).
+Settled and decided markets excluded. Rebuilt automatically each morning.</footer>
+</div>
