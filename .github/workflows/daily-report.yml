@@ -1,0 +1,59 @@
+name: Daily report
+
+# Rebuilds report.html every morning and commits it, so GitHub Pages serves the
+# fresh version. Runs on GitHub's servers, so it works with your computer off.
+on:
+  schedule:
+    # 05:00 UTC = 07:00 Europe/Ljubljana in summer (CEST), 06:00 in winter (CET).
+    # GitHub cron is always UTC and has no daylight-saving handling.
+    - cron: "0 5 * * *"
+  workflow_dispatch:        # lets you run it by hand from the Actions tab
+
+permissions:
+  contents: write           # needed to commit the regenerated report
+
+concurrency:
+  group: daily-report
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # No pip install: the script deliberately uses only the standard library,
+      # so there is nothing to break when a dependency changes upstream.
+      - name: Build the report
+        run: python daily_report.py --wallets 40 --window 30d --out report.html
+
+      - name: Fail if the report came out empty
+        run: |
+          if [ ! -s report.html ]; then
+            echo "report.html is missing or empty"
+            exit 1
+          fi
+          # A report that lost its table is a silent failure worth catching.
+          if ! grep -q "Where the money agrees\|is not clustered today" report.html; then
+            echo "report.html has neither a results table nor the empty-state notice"
+            exit 1
+          fi
+          echo "report.html looks sane ($(wc -c < report.html) bytes)"
+
+      - name: Commit the new report
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add report.html
+          if git diff --quiet --cached; then
+            echo "Nothing changed today."
+          else
+            git commit -m "Daily report for $(date -u +%Y-%m-%d)"
+            git push
+          fi
