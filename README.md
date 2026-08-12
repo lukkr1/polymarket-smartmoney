@@ -1,17 +1,18 @@
 # Polymarket Smart Money
 
-Two pieces that do different jobs.
+**Live tracker:** <https://lukkr1.github.io/polymarket-smartmoney/>
+**Daily report:** <https://lukkr1.github.io/polymarket-smartmoney/report.html>
 
-## 1. The live site — `index.html`
+Both work on your phone. Two pieces that do different jobs.
 
-An interactive tracker you run yourself. Build lists of wallets to follow, then
-see what they hold and what they're buying right now.
+## 1. The live tracker
 
-**To open it:** double-click `index.html`. That's it — it runs entirely in your
-browser and talks to Polymarket directly.
+Build lists of wallets to follow, then see what they hold and what they're buying
+right now. Open the link above — it runs entirely in your browser and talks to
+Polymarket directly, so the data is always current.
 
-If your browser blocks the data (some do on `file://` pages), run the tiny
-included server instead:
+To run it from this folder instead, double-click `index.html`. If your browser
+blocks the data on a `file://` page, use the tiny included server:
 
 ```
 powershell -ExecutionPolicy Bypass -File serve.ps1
@@ -42,16 +43,30 @@ addresses* in Members to move a list somewhere else.
 
 ## 2. The daily report — runs without you
 
-A scheduled agent runs every morning at 07:00 (Ljubljana time), reads the top 40
-wallets by 30-day profit, works out which positions three or more of them
-independently hold, and rebuilds a report page.
+A GitHub Actions workflow runs every morning at 05:00 UTC (07:00 Ljubljana in
+summer, 06:00 in winter), reads the top 40 wallets by 30-day profit, works out
+which positions three or more of them independently hold, and commits a rebuilt
+`report.html`. It runs on GitHub's servers, so your computer can be switched off.
 
-- **The report:** <https://claude.ai/code/artifact/8602c582-6ab7-4401-bda6-0bae16ce262d>
+- **The report:** <https://lukkr1.github.io/polymarket-smartmoney/report.html>
   — same link every day, always the latest version.
-- **Manage the schedule:** <https://claude.ai/code/routines>
+- **Run it early:** Actions tab → *Daily report* → *Run workflow*.
+- **If it breaks:** GitHub emails you. The workflow also fails loudly rather than
+  publishing an empty page.
 
-`daily_report.py` is the same logic as a standalone script, if you ever want to
-run it yourself: `python daily_report.py --wallets 40 --out report.html`.
+`daily_report.py` is the same logic as a standalone script:
+`python daily_report.py --wallets 40 --out report.html`.
+
+### Changing what it tracks
+
+Edit `.github/workflows/daily-report.yml`:
+
+- `--wallets 40` — how many top wallets to read.
+- `--window 30d` — ranking window: `1d`, `7d`, `30d`, or `all`.
+- `cron: "0 5 * * *"` — when it runs, always in UTC.
+
+To change how strict the shortlist is, edit `MIN_CONSENSUS` (default 3) near the
+top of `daily_report.py`.
 
 ## How the numbers are worked out
 
