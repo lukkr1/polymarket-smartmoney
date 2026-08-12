@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Polymarket Smart Money</title>
+<style>
+  /* minimal reset (the hosted-artifact version gets this from its host) */
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; }
+  /* ---------- tokens: light is the base, both dark states redefine ---------- */
+  :root {
+    --ground: #F7F8F7;
+    --surface: #FFFFFF;
+    --surface-2: #F0F3F1;
+    --line: #DCE3DF;
+    --line-strong: #C2CDC7;
+    --ink: #12201C;
+    --ink-2: #4A5C55;
+    --ink-3: #7A8A83;
+    --accent: #0E7C66;
+    --accent-soft: #E2F0EB;
+    --on-accent: #FBFEFD;
+    --pos: #1A7F4B;
+    --neg: #B4453A;
+    --warn: #B0761E;
+    --pos-soft: #E4F1E8;
+    --neg-soft: #F8E7E4;
+    --shadow: 0 1px 2px rgba(18, 32, 28, .06), 0 8px 24px -12px rgba(18, 32, 28, .12);
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0E1513;
+      --surface: #16201D;
+      --surface-2: #1C2723;
+      --line: #2A3733;
+      --line-strong: #3C4C46;
+      --ink: #E8EFEB;
+      --ink-2: #A3B3AC;
+      --ink-3: #74857E;
+      --accent: #4FC0A3;
+      --accent-soft: #17332C;
+      --on-accent: #08120F;
+      --pos: #52C07E;
+      --neg: #E2796C;
+      --warn: #D9A44A;
+      --pos-soft: #142E20;
+      --neg-soft: #331C19;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0E1513;
+    --surface: #16201D;
+    --surface-2: #1C2723;
+    --line: #2A3733;
+    --line-strong: #3C4C46;
+    --ink: #E8EFEB;
+    --ink-2: #A3B3AC;
+    --ink-3: #74857E;
+    --accent: #4FC0A3;
+    --accent-soft: #17332C;
+    --on-accent: #08120F;
+    --pos: #52C07E;
+    --neg: #E2796C;
+    --warn: #D9A44A;
+    --pos-soft: #142E20;
+    --neg-soft: #331C19;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---------- shell ---------- */
+  .app { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+
+  .rail {
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: 18px 14px 28px;
+    display: flex; flex-direction: column; gap: 20px;
+  }
+
+  .brand { display: flex; flex-direction: column; gap: 2px; }
+  .brand h1 {
+    margin: 0; font-size: 15px; font-weight: 650; letter-spacing: -.01em;
+  }
+  .brand span {
+    font-family: var(--mono); font-size: 10.5px; color: var(--ink-3);
+    text-transform: uppercase; letter-spacing: .09em;
+  }
+
+  .label {
+    font-family: var(--mono); font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .1em; color: var(--ink-3);
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+
+  .listset { display: flex; flex-direction: column; gap: 3px; }
+
+  .list-item {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding: 7px 9px; border-radius: 4px; border: 1px solid transparent;
+    background: none; color: var(--ink-2); font: inherit; font-size: 13px;
+    text-align: left; cursor: pointer;
+  }
+  .list-item:hover { background: var(--surface-2); color: var(--ink); }
+  .list-item[aria-current="true"] {
+    background: var(--accent-soft); border-color: var(--accent);
+    color: var(--ink); font-weight: 550;
+  }
+  .list-item .n {
+    margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3);
+  }
+
+  /* ---------- controls ---------- */
+  button, select, input {
+    font: inherit; color: var(--ink); background: var(--surface);
+    border: 1px solid var(--line-strong); border-radius: 4px; padding: 6px 9px;
+  }
+  button { cursor: pointer; }
+  button:hover { border-color: var(--accent); }
+  .btn-primary {
+    background: var(--accent); border-color: var(--accent);
+    color: var(--on-accent); font-weight: 550;
+  }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-sm { padding: 3px 7px; font-size: 12px; }
+  .btn-ghost { background: none; border-color: var(--line); color: var(--ink-2); }
+
+  :is(button, select, input, a):focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+
+  /* ---------- main ---------- */
+  .main { display: flex; flex-direction: column; min-width: 0; }
+
+  .topbar {
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+    padding: 14px 22px; border-bottom: 1px solid var(--line); background: var(--surface);
+  }
+
+  .tabs { display: flex; gap: 2px; }
+  .tab {
+    background: none; border: none; border-bottom: 2px solid transparent;
+    border-radius: 0; padding: 6px 11px; color: var(--ink-3); font-size: 13px; font-weight: 500;
+  }
+  .tab:hover { color: var(--ink); border-color: var(--line-strong); }
+  .tab[aria-selected="true"] { color: var(--accent); border-color: var(--accent); font-weight: 600; }
+
+  .spacer { margin-left: auto; }
+  .meta { font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+
+  .content { padding: 22px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+
+  .toolrow { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  /* ---------- stats ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+  .stat {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 5px;
+    padding: 11px 13px; display: flex; flex-direction: column; gap: 3px;
+  }
+  .stat dt {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--ink-3); margin: 0;
+  }
+  .stat dd {
+    margin: 0; font-family: var(--mono); font-size: 19px; font-weight: 600;
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  }
+  .stat .sub { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); font-weight: 400; }
+
+  /* ---------- panel + table ---------- */
+  .panel {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    overflow: hidden;
+  }
+  .panel-head {
+    padding: 12px 15px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+  }
+  .panel-head h2 { margin: 0; font-size: 13.5px; font-weight: 620; }
+  .panel-head p { margin: 0; font-size: 12px; color: var(--ink-3); }
+
+  .scroll { overflow-x: auto; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    position: sticky; top: 0; background: var(--surface-2); z-index: 1;
+    font-family: var(--mono); font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--ink-3);
+    text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  thead th.sortable { cursor: pointer; user-select: none; }
+  thead th.sortable:hover { color: var(--ink); }
+  thead th .arrow { color: var(--accent); }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  .num {
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+    text-align: right; white-space: nowrap;
+  }
+  th.num { text-align: right; }
+  .pos { color: var(--pos); }
+  .neg { color: var(--neg); }
+  .dim { color: var(--ink-3); }
+
+  .mkt { min-width: 260px; max-width: 420px; }
+  .mkt a { color: var(--ink); text-decoration: none; font-weight: 500; }
+  .mkt a:hover { color: var(--accent); text-decoration: underline; }
+  .mkt .sub { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
+
+  .who { display: flex; flex-direction: column; gap: 1px; min-width: 150px; }
+  .who .nm { font-weight: 500; }
+  .who .ad { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); }
+
+  /* outcome + state pills */
+  .pill {
+    display: inline-block; padding: 1px 7px; border-radius: 3px;
+    font-family: var(--mono); font-size: 10.5px; font-weight: 600;
+    letter-spacing: .03em; white-space: nowrap;
+  }
+  .pill-yes { background: var(--pos-soft); color: var(--pos); }
+  .pill-no { background: var(--neg-soft); color: var(--neg); }
+  .pill-other { background: var(--surface-2); color: var(--ink-2); }
+  .pill-warn { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); }
+  .pill-accent { background: var(--accent-soft); color: var(--accent); }
+
+  /* share meter — encodes weight as form, not just number */
+  .meter { display: flex; align-items: center; gap: 7px; justify-content: flex-end; }
+  .meter .bar {
+    width: 46px; height: 5px; border-radius: 2px; background: var(--surface-2);
+    overflow: hidden; flex: none;
+  }
+  .meter .bar i { display: block; height: 100%; background: var(--accent); }
+  .meter .v { font-family: var(--mono); font-variant-numeric: tabular-nums; min-width: 44px; text-align: right; }
+
+  /* consensus dots */
+  .dots { display: inline-flex; gap: 2px; align-items: center; }
+  .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); display: block; }
+  .dots .more { font-family: var(--mono); font-size: 10.5px; color: var(--ink-3); margin-left: 2px; }
+
+  /* ---------- misc states ---------- */
+  .empty {
+    padding: 44px 22px; text-align: center; color: var(--ink-3);
+    display: flex; flex-direction: column; gap: 10px; align-items: center;
+  }
+  .empty strong { color: var(--ink); font-size: 14px; }
+  .empty p { margin: 0; max-width: 46ch; font-size: 13px; }
+
+  .note {
+    background: var(--surface-2); border: 1px solid var(--line); border-left: 2px solid var(--warn);
+    border-radius: 4px; padding: 10px 13px; font-size: 12.5px; color: var(--ink-2);
+  }
+  .note b { color: var(--ink); }
+
+  .bar-progress { height: 2px; background: var(--accent); transition: width .2s; }
+
+  .row-actions { display: flex; gap: 5px; justify-content: flex-end; }
+
+  @media (max-width: 820px) {
+    .app { grid-template-columns: 1fr; }
+    .rail { border-right: none; border-bottom: 1px solid var(--line); }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="rail">
+    <div class="brand">
+      <h1>Smart Money</h1>
+      <span>Polymarket tracker</span>
+    </div>
+
+    <div>
+      <div class="label" style="margin-bottom:8px">
+        <span>Follow lists</span>
+        <button class="btn-sm btn-ghost" id="newList" title="Create a new list">+ New</button>
+      </div>
+      <div class="listset" id="listset"></div>
+    </div>
+
+    <div>
+      <div class="label" style="margin-bottom:8px"><span>Add wallet</span></div>
+      <form id="addForm" style="display:flex;flex-direction:column;gap:6px">
+        <input id="addAddr" placeholder="0x wallet address" spellcheck="false"
+               style="font-family:var(--mono);font-size:11.5px" />
+        <button class="btn-primary btn-sm" type="submit">Add to list</button>
+      </form>
+    </div>
+
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+      <a href="report.html" class="meta"
+         style="color:var(--accent);text-decoration:none;font-weight:600">
+        Today's report &rarr;
+      </a>
+      <span class="meta">
+        Data: Polymarket public API.<br />Lists saved in this browser.
+      </span>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-view="discover" aria-selected="true">Discover</button>
+        <button class="tab" role="tab" data-view="holdings" aria-selected="false">Holdings</button>
+        <button class="tab" role="tab" data-view="flow" aria-selected="false">Flow</button>
+        <button class="tab" role="tab" data-view="signals" aria-selected="false">Signals</button>
+        <button class="tab" role="tab" data-view="members" aria-selected="false">Members</button>
+      </div>
+      <div class="spacer"></div>
+      <span class="meta" id="status">Ready</span>
+      <button class="btn-sm" id="refresh">Refresh</button>
+    </div>
+    <div class="bar-progress" id="prog" style="width:0"></div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   Polymarket public endpoints (all CORS-open, no key needed)
+   ============================================================ */
+const LB   = "https://lb-api.polymarket.com";      // /profit, /volume ?window=1d|7d|30d|all
+const DATA = "https://data-api.polymarket.com";    // /positions, /activity
+
+const fmtUsd = (n, d = 0) => {
+  if (n == null || !isFinite(n)) return "—";
+  const a = Math.abs(n);
+  const s = n < 0 ? "-" : "";
+  if (a >= 1e9) return s + "$" + (a / 1e9).toFixed(2) + "B";
+  if (a >= 1e6) return s + "$" + (a / 1e6).toFixed(2) + "M";
+  if (a >= 1e3) return s + "$" + (a / 1e3).toFixed(1) + "k";
+  return s + "$" + a.toFixed(d);
+};
+const fmtPct = (n, d = 1) => (n == null || !isFinite(n)) ? "—" : (n * 100).toFixed(d) + "%";
+const fmtCents = n => (n == null || !isFinite(n)) ? "—" : (n * 100).toFixed(1) + "¢";
+const short = a => a ? a.slice(0, 6) + "…" + a.slice(-4) : "";
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* A wallet's display name is often just its own address + timestamp — useless. */
+function cleanName(name, addr) {
+  if (!name) return short(addr);
+  if (/^0x[0-9a-fA-F]{40}(-\d+)?$/.test(name)) return short(addr);
+  return name.length > 26 ? name.slice(0, 25) + "…" : name;
+}
+
+/* ---------- storage ---------- */
+const KEY = "pmw.lists.v2";
+let store = load();
+
+function load() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (raw && raw.lists && Object.keys(raw.lists).length) return raw;
+  } catch (e) { /* fall through to a fresh store */ }
+  const id = "l" + Date.now();
+  return { lists: { [id]: { id, name: "My picks", wallets: [] } }, activeId: id };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(store)); }
+  catch (e) { setStatus("Could not save — browser storage is full or blocked"); }
+}
+const activeList = () => store.lists[store.activeId] || Object.values(store.lists)[0];
+
+/* ---------- ui state ---------- */
+let view = "discover";
+const ui = {
+  lbWindow: "30d", lbMetric: "profit", lbLimit: 50,
+  weight: "capital",          // capital | equal
+  flowHours: 24,
+  minConsensus: 2,
+  sort: {}                    // per-view {key, dir}
+};
+
+/* ---------- fetch helpers ---------- */
+const cache = new Map();
+async function getJSON(url, { ttl = 60000 } = {}) {
+  const hit = cache.get(url);
+  const now = Date.now();
+  if (hit && now - hit.t < ttl) return hit.v;
+  const r = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!r.ok) throw new Error("HTTP " + r.status);
+  const v = await r.json();
+  cache.set(url, { t: now, v });
+  return v;
+}
+
+/* Bounded concurrency — be a polite client, and keep progress visible. */
+async function mapLimit(items, limit, fn) {
+  const out = new Array(items.length);
+  let i = 0, done = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const idx = i++;
+      if (idx >= items.length) return;
+      try { out[idx] = await fn(items[idx], idx); }
+      catch (e) { out[idx] = { __error: e.message }; }
+      done++;
+      setProgress(done / items.length);
+    }
+  });
+  await Promise.all(workers);
+  return out;
+}
+
+const $status = document.getElementById("status");
+const $prog = document.getElementById("prog");
+const setStatus = s => { $status.textContent = s; };
+function setProgress(f) {
+  $prog.style.width = (f > 0 && f < 1) ? (f * 100).toFixed(0) + "%" : "0";
+}
+
+/* ============================================================
+   data loaders
+   ============================================================ */
+async function loadLeaderboard() {
+  const url = `${LB}/${ui.lbMetric}?window=${ui.lbWindow}&limit=${ui.lbLimit}`;
+  const rows = await getJSON(url, { ttl: 120000 });
+  if (!Array.isArray(rows)) throw new Error("Unexpected leaderboard response");
+  return rows.map((r, idx) => ({
+    rank: idx + 1,
+    address: (r.proxyWallet || "").toLowerCase(),
+    name: cleanName(r.name || r.pseudonym, r.proxyWallet),
+    amount: Number(r.amount) || 0
+  }));
+}
+
+/* Positions for every wallet in a list, plus each wallet's own total. */
+async function loadListPositions(wallets) {
+  const res = await mapLimit(wallets, 5, async w => {
+    // redeemable=false filters settled markets out server-side. That matters for
+    // more than tidiness: heavy traders can have hundreds of unredeemed settled
+    // bets, and without this they eat the 500-row cap and hide the live positions.
+    const rows = await getJSON(
+      `${DATA}/positions?user=${w.address}&limit=500&sizeThreshold=1` +
+      `&redeemable=false&sortBy=CURRENT&sortDirection=DESC`,
+      { ttl: 90000 });
+    return { wallet: w, positions: Array.isArray(rows) ? rows : [] };
+  });
+  return res.map((r, i) => r && !r.__error ? r
+    : { wallet: wallets[i], positions: [], error: r && r.__error });
+}
+
+async function loadListActivity(wallets, hours) {
+  const start = Math.floor(Date.now() / 1000) - hours * 3600;
+  const res = await mapLimit(wallets, 5, async w => {
+    const rows = await getJSON(
+      `${DATA}/activity?user=${w.address}&limit=500&type=TRADE&start=${start}&sortDirection=DESC`,
+      { ttl: 60000 });
+    return { wallet: w, trades: Array.isArray(rows) ? rows : [] };
+  });
+  return res.map((r, i) => r && !r.__error ? r
+    : { wallet: wallets[i], trades: [], error: r && r.__error });
+}
+
+/* ============================================================
+   aggregation
+
+   Key insight: aggregate per OUTCOME TOKEN (`asset`), not per market —
+   two followed wallets can sit on opposite sides of the same market, and
+   collapsing those would invent a consensus that isn't there.
+   ============================================================ */
+/* Deciding what still counts as a live bet.
+
+   `/positions` keeps finished markets in the list until the trader redeems them,
+   and the `redeemable` flag alone is not enough: plenty of positions sit at 0¢,
+   fully lost, without ever being flagged. One wallet in testing showed a $3.2k
+   book carrying $661k of "unrealised" loss — 292 dead bets it had never cashed
+   out. Summed naively, that single graveyard set the headline number for the
+   whole group.
+
+   So liveness is about whether the market is still genuinely undecided. Anything
+   pinned to the extremes is over in practice — no edge left to copy, and its
+   long-settled loss has no business in a P&L for open bets. */
+const DECIDED_LOW = 0.01, DECIDED_HIGH = 0.99;
+function isLive(p) {
+  if (p.redeemable === true) return false;
+  if ((Number(p.currentValue) || 0) <= 0) return false;
+  const price = Number(p.curPrice) || 0;
+  return price >= DECIDED_LOW && price <= DECIDED_HIGH;
+}
+
+function aggregateHoldings(perWallet, weightMode) {
+  let settledCount = 0, settledValue = 0;
+  for (const { positions } of perWallet) {
+    for (const p of positions) {
+      if (!isLive(p)) { settledCount++; settledValue += Number(p.currentValue) || 0; }
+    }
+  }
+
+  const walletTotal = new Map();
+  for (const { wallet, positions } of perWallet) {
+    walletTotal.set(wallet.address,
+      positions.filter(isLive).reduce((s, p) => s + (Number(p.currentValue) || 0), 0));
+  }
+  const grandTotal = [...walletTotal.values()].reduce((a, b) => a + b, 0);
+  const active = perWallet.filter(w => (walletTotal.get(w.wallet.address) || 0) > 0);
+
+  const byAsset = new Map();
+  for (const { wallet, positions } of perWallet) {
+    const wTot = walletTotal.get(wallet.address) || 0;
+    for (const p of positions) {
+      if (!isLive(p)) continue;
+      const value = Number(p.currentValue) || 0;
+      const k = p.asset;
+      let e = byAsset.get(k);
+      if (!e) {
+        e = {
+          asset: k, conditionId: p.conditionId, title: p.title, slug: p.slug,
+          eventSlug: p.eventSlug, outcome: p.outcome, endDate: p.endDate,
+          curPrice: Number(p.curPrice) || 0,
+          value: 0, size: 0, entryNotional: 0, pnl: 0,
+          shareSum: 0, holders: []
+        };
+        byAsset.set(k, e);
+      }
+      const size = Number(p.size) || 0;
+      e.value += value;
+      e.size += size;
+      e.entryNotional += size * (Number(p.avgPrice) || 0);
+      e.pnl += Number(p.cashPnl) || 0;
+      e.curPrice = Number(p.curPrice) || e.curPrice;
+      // each holder's conviction = how much of THEIR book sits here
+      const personalShare = wTot > 0 ? value / wTot : 0;
+      e.shareSum += personalShare;
+      e.holders.push({
+        address: wallet.address, name: wallet.label || wallet.name,
+        value, personalShare, avgPrice: Number(p.avgPrice) || 0
+      });
+    }
+  }
+
+  const rows = [...byAsset.values()].map(e => {
+    const avgEntry = e.size > 0 ? e.entryNotional / e.size : 0;
+    return {
+      ...e,
+      avgEntry,
+      consensus: e.holders.length,
+      consensusPct: active.length ? e.holders.length / active.length : 0,
+      // capital-weighted: share of the group's total book
+      // equal-weighted: average personal allocation, so whales can't dominate
+      share: weightMode === "equal"
+        ? (active.length ? e.shareSum / active.length : 0)
+        : (grandTotal > 0 ? e.value / grandTotal : 0),
+      drift: e.curPrice - avgEntry,          // >0 = price ran up since they bought
+      pnlPct: e.entryNotional > 0 ? e.pnl / e.entryNotional : 0
+    };
+  });
+  return { rows, grandTotal, walletTotal, activeCount: active.length,
+           settledCount, settledValue };
+}
+
+function aggregateFlow(perWallet) {
+  const byAsset = new Map();
+  let trades = 0;
+  for (const { wallet, trades: list } of perWallet) {
+    for (const t of list) {
+      trades++;
+      const k = t.asset;
+      let e = byAsset.get(k);
+      if (!e) {
+        e = {
+          asset: k, conditionId: t.conditionId, title: t.title, slug: t.slug,
+          eventSlug: t.eventSlug, outcome: t.outcome,
+          buy: 0, sell: 0, notional: 0, priceNotional: 0,
+          last: 0, buyers: new Set(), sellers: new Set()
+        };
+        byAsset.set(k, e);
+      }
+      const usd = Number(t.usdcSize) || 0;
+      const price = Number(t.price) || 0;
+      if (t.side === "SELL") { e.sell += usd; e.sellers.add(wallet.address); }
+      else { e.buy += usd; e.buyers.add(wallet.address); }
+      e.notional += usd;
+      e.priceNotional += usd * price;
+      e.last = Math.max(e.last, Number(t.timestamp) || 0);
+    }
+  }
+  const rows = [...byAsset.values()].map(e => ({
+    ...e,
+    net: e.buy - e.sell,
+    vwap: e.notional > 0 ? e.priceNotional / e.notional : 0,
+    traders: new Set([...e.buyers, ...e.sellers]).size
+  }));
+  return { rows, trades };
+}
+
+/* Signals: transparent, not a black box.
+
+   The tempting mistake here is to treat "price is now below what they paid" as a
+   discount and rank by it. That inverts the list: it floats the group's WORST
+   positions to the top, because a price falling away from smart money usually
+   means the market learned something they hadn't. A bet down 60% is a warning,
+   not a bargain.
+
+   So conviction leads — how many independent wallets hold it, and how much of the
+   group's money is behind it. Entry quality is then about being CLOSE to their
+   price in either direction: too far above and the move already happened, too far
+   below and you're catching a falling knife. */
+function buildSignals(hold) {
+  return hold.rows
+    .filter(r => r.consensus >= ui.minConsensus
+              && r.curPrice > 0.02 && r.curPrice < 0.98
+              && r.value >= 500)   // ignore dust; a rounding error isn't conviction
+    .map(r => {
+      const entryRoom = r.avgEntry > 0 ? (r.avgEntry - r.curPrice) / r.avgEntry : 0;
+      const conviction = Math.log2(1 + r.consensus) * 2
+                       + Math.min(1.5, r.share * 20);
+      const proximity = 1 - Math.min(1, Math.abs(entryRoom) / 0.25);
+      return { ...r, entryRoom, conviction, score: conviction + proximity * 0.8 };
+    })
+    .sort((a, b) => b.score - a.score);
+}
+
+/* ============================================================
+   sorting
+   ============================================================ */
+function sortRows(rows, key, dir, fallback) {
+  const k = key || fallback;
+  const s = [...rows].sort((a, b) => {
+    const x = a[k], y = b[k];
+    if (typeof x === "string" || typeof y === "string")
+      return String(x ?? "").localeCompare(String(y ?? ""));
+    return (Number(y) || 0) - (Number(x) || 0);
+  });
+  return dir === "asc" ? s.reverse() : s;
+}
+function th(label, key, cur, cls = "num") {
+  const on = cur.key === key;
+  const arrow = on ? `<span class="arrow">${cur.dir === "asc" ? "↑" : "↓"}</span>` : "";
+  return `<th class="${cls} sortable" data-sort="${key}">${esc(label)} ${arrow}</th>`;
+}
+function curSort(v, fallback) {
+  if (!ui.sort[v]) ui.sort[v] = { key: fallback, dir: "desc" };
+  return ui.sort[v];
+}
+
+/* market link + outcome pill */
+function marketCell(r) {
+  const href = r.eventSlug ? `https://polymarket.com/event/${encodeURIComponent(r.eventSlug)}`
+                           : "https://polymarket.com";
+  return `<td class="mkt">
+    <a href="${href}" target="_blank" rel="noopener noreferrer">${esc(r.title || "Untitled market")}</a>
+    <div class="sub">${r.endDate ? "ends " + esc(String(r.endDate).slice(0, 10)) : ""}</div>
+  </td>`;
+}
+function outcomeCell(o) {
+  const t = String(o || "").toLowerCase();
+  const cls = t === "yes" ? "pill-yes" : t === "no" ? "pill-no" : "pill-other";
+  return `<td><span class="pill ${cls}">${esc(o || "?")}</span></td>`;
+}
+function meter(share) {
+  const w = Math.max(2, Math.min(100, share * 100));
+  return `<td class="num"><span class="meter">
+    <span class="bar"><i style="width:${w.toFixed(0)}%"></i></span>
+    <span class="v">${fmtPct(share)}</span></span></td>`;
+}
+function dots(n, total) {
+  const show = Math.min(n, 6);
+  return `<td class="num"><span class="dots">
+    ${"<i></i>".repeat(show)}${n > 6 ? `<span class="more">+${n - 6}</span>` : ""}
+    <span class="more">${n}/${total}</span></span></td>`;
+}
+
+/* ============================================================
+   views
+   ============================================================ */
+const $content = document.getElementById("content");
+
+function renderRail() {
+  const set = document.getElementById("listset");
+  set.innerHTML = Object.values(store.lists).map(l => `
+    <button class="list-item" data-list="${esc(l.id)}"
+            aria-current="${l.id === store.activeId}">
+      <span>${esc(l.name)}</span><span class="n">${l.wallets.length}</span>
+    </button>`).join("");
+}
+
+/* Renders are async, so a slow one can finish AFTER the user has already clicked
+   somewhere else and paint the wrong screen over their choice. Every render takes
+   a ticket; a render whose ticket is no longer the current one throws its work
+   away instead of painting. */
+let renderSeq = 0;
+const stale = seq => seq !== renderSeq;
+
+async function render() {
+  const seq = ++renderSeq;
+  renderRail();
+  document.querySelectorAll(".tab").forEach(t =>
+    t.setAttribute("aria-selected", String(t.dataset.view === view)));
+  try {
+    if (view === "discover") await renderDiscover(seq);
+    else if (view === "members") renderMembers();
+    else await renderListView(seq);
+  } catch (e) {
+    if (stale(seq)) return;
+    $content.innerHTML = `<div class="panel"><div class="empty">
+      <strong>Couldn't load data</strong>
+      <p>${esc(e.message)}. Polymarket's API may be rate-limiting or temporarily down —
+      press Refresh to try again.</p></div></div>`;
+    setStatus("Error");
+  } finally { setProgress(0); }
+}
+
+/* ---------- Discover ---------- */
+async function renderDiscover(seq) {
+  setStatus("Loading leaderboard…");
+  const rows = await loadLeaderboard();
+  if (stale(seq)) return;
+  const cur = curSort("discover", "amount");
+  const sorted = sortRows(rows, cur.key, cur.dir, "amount");
+  const metricName = ui.lbMetric === "profit" ? "Profit" : "Volume";
+  const lists = Object.values(store.lists);
+
+  $content.innerHTML = `
+    <div class="toolrow">
+      <span class="label">Window</span>
+      <select id="lbWindow">${["1d", "7d", "30d", "all"].map(w =>
+        `<option value="${w}" ${w === ui.lbWindow ? "selected" : ""}>${w === "all" ? "All time" : w}</option>`).join("")}</select>
+      <span class="label">Rank by</span>
+      <select id="lbMetric">
+        <option value="profit" ${ui.lbMetric === "profit" ? "selected" : ""}>Profit</option>
+        <option value="volume" ${ui.lbMetric === "volume" ? "selected" : ""}>Volume</option>
+      </select>
+      <span class="label">Show</span>
+      <select id="lbLimit">${[25, 50, 100, 200].map(n =>
+        `<option value="${n}" ${n === ui.lbLimit ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <div class="spacer"></div>
+      <span class="label">Add top</span>
+      <select id="bulkN">${[10, 20, 50].map(n => `<option value="${n}">${n}</option>`).join("")}</select>
+      <span class="label">to</span>
+      <select id="bulkList">${lists.map(l =>
+        `<option value="${esc(l.id)}" ${l.id === store.activeId ? "selected" : ""}>${esc(l.name)}</option>`).join("")}</select>
+      <button class="btn-primary btn-sm" id="bulkAdd">Add</button>
+    </div>
+
+    <div class="note">
+      <b>Read this ranking carefully.</b> It sorts by raw dollars, which tracks bankroll size
+      as much as skill — a whale who risks millions outranks a sharper trader with a smaller
+      book. The <b>Return</b> column below (profit ÷ volume) is the closer thing to an edge
+      measure. Neither separates skill from luck over a short window.
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Top wallets by ${esc(metricName.toLowerCase())}</h2>
+        <p>${rows.length} wallets · ${ui.lbWindow === "all" ? "all time" : "last " + ui.lbWindow}</p>
+      </div>
+      <div class="scroll">
+        <table>
+          <thead><tr>
+            <th class="num">#</th>
+            <th>Wallet</th>
+            ${th(metricName, "amount", cur)}
+            ${th("Return", "roi", cur)}
+            <th class="num">Add to list</th>
+          </tr></thead>
+          <tbody>${sorted.map(r => `
+            <tr>
+              <td class="num dim">${r.rank}</td>
+              <td><div class="who">
+                <span class="nm">${esc(r.name)}</span>
+                <span class="ad">${esc(short(r.address))}</span>
+              </div></td>
+              <td class="num ${r.amount >= 0 ? "pos" : "neg"}">${fmtUsd(r.amount)}</td>
+              <td class="num dim">—</td>
+              <td class="num"><div class="row-actions">
+                <button class="btn-sm" data-add="${esc(r.address)}"
+                        data-name="${esc(r.name)}">+ ${esc(activeList().name)}</button>
+              </div></td>
+            </tr>`).join("")}</tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // The profit board has no volume field and vice-versa, so Return needs the
+  // other board too. Fetch it lazily and fill the column in place.
+  fillReturnColumn(sorted, seq);
+
+  document.getElementById("lbWindow").onchange = e => { ui.lbWindow = e.target.value; render(); };
+  document.getElementById("lbMetric").onchange = e => { ui.lbMetric = e.target.value; render(); };
+  document.getElementById("lbLimit").onchange = e => { ui.lbLimit = +e.target.value; render(); };
+  document.getElementById("bulkAdd").onclick = () => {
+    const n = +document.getElementById("bulkN").value;
+    const listId = document.getElementById("bulkList").value;
+    let added = 0;
+    for (const r of sorted.slice(0, n)) if (addWallet(listId, r.address, r.name)) added++;
+    save(); renderRail();
+    setStatus(`Added ${added} wallet${added === 1 ? "" : "s"} to ${store.lists[listId].name}`);
+  };
+  setStatus(`${rows.length} wallets`);
+}
+
+async function fillReturnColumn(rows, seq) {
+  try {
+    const other = ui.lbMetric === "profit" ? "volume" : "profit";
+    const list = await getJSON(`${LB}/${other}?window=${ui.lbWindow}&limit=500`, { ttl: 300000 });
+    if (stale(seq)) return;
+    const map = new Map((Array.isArray(list) ? list : [])
+      .map(r => [(r.proxyWallet || "").toLowerCase(), Number(r.amount) || 0]));
+    const cells = $content.querySelectorAll("tbody tr");
+    rows.forEach((r, i) => {
+      const cell = cells[i] && cells[i].children[3];
+      if (!cell) return;
+      const otherVal = map.get(r.address);
+      if (otherVal == null || otherVal === 0) { cell.textContent = "—"; return; }
+      const profit = ui.lbMetric === "profit" ? r.amount : otherVal;
+      const volume = ui.lbMetric === "profit" ? otherVal : r.amount;
+      if (!volume) { cell.textContent = "—"; return; }
+      const roi = profit / volume;
+      cell.textContent = fmtPct(roi, 1);
+      cell.className = "num " + (roi >= 0 ? "pos" : "neg");
+    });
+  } catch (e) { /* Return column simply stays blank — not worth failing the page */ }
+}
+
+/* ---------- Members ---------- */
+function renderMembers() {
+  const l = activeList();
+  $content.innerHTML = `
+    <div class="toolrow">
+      <button class="btn-sm" id="renameList">Rename list</button>
+      <button class="btn-sm btn-ghost" id="deleteList">Delete list</button>
+      <button class="btn-sm btn-ghost" id="copyList">Copy addresses</button>
+    </div>
+    ${!l.wallets.length ? `<div class="panel"><div class="empty">
+        <strong>${esc(l.name)} is empty</strong>
+        <p>Add wallets from the Discover tab, or paste an address into the sidebar.</p>
+      </div></div>` : `
+    <div class="panel">
+      <div class="panel-head"><h2>${esc(l.name)}</h2>
+        <p>${l.wallets.length} wallet${l.wallets.length === 1 ? "" : "s"}</p></div>
+      <div class="scroll"><table>
+        <thead><tr><th>Wallet</th><th>Address</th><th class="num">Remove</th></tr></thead>
+        <tbody>${l.wallets.map(w => `
+          <tr>
+            <td>${esc(w.label || w.name || short(w.address))}</td>
+            <td class="num dim" style="text-align:left">${esc(w.address)}</td>
+            <td class="num"><button class="btn-sm btn-ghost"
+                data-rm="${esc(w.address)}">Remove</button></td>
+          </tr>`).join("")}</tbody>
+      </table></div>
+    </div>`}`;
+
+  document.getElementById("renameList").onclick = () => {
+    const n = prompt("Rename list", l.name);
+    if (n && n.trim()) { l.name = n.trim(); save(); render(); }
+  };
+  document.getElementById("deleteList").onclick = () => {
+    if (Object.keys(store.lists).length === 1) {
+      setStatus("Keep at least one list"); return;
+    }
+    if (!confirm(`Delete "${l.name}" and its ${l.wallets.length} wallets?`)) return;
+    delete store.lists[l.id];
+    store.activeId = Object.keys(store.lists)[0];
+    save(); render();
+  };
+  document.getElementById("copyList").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(l.wallets.map(w => w.address).join("\n"));
+      setStatus("Addresses copied");
+    } catch (e) { setStatus("Clipboard blocked by browser"); }
+  };
+}
+
+/* ---------- Holdings / Flow / Signals ---------- */
+async function renderListView(seq) {
+  const l = activeList();
+  if (!l.wallets.length) {
+    $content.innerHTML = `<div class="panel"><div class="empty">
+      <strong>${esc(l.name)} has no wallets yet</strong>
+      <p>Open <b>Discover</b> and add a few top wallets, then come back here for the
+      breakdown of what they're holding and trading.</p>
+      <button class="btn-primary btn-sm" id="goDiscover">Go to Discover</button>
+    </div></div>`;
+    document.getElementById("goDiscover").onclick = () => { view = "discover"; render(); };
+    return;
+  }
+
+  if (view === "flow") return renderFlow(l, seq);
+
+  setStatus(`Loading positions for ${l.wallets.length} wallets…`);
+  const per = await loadListPositions(l.wallets);
+  if (stale(seq)) return;
+  const failed = per.filter(p => p.error).length;
+  const hold = aggregateHoldings(per, ui.weight);
+
+  if (view === "signals") return renderSignals(l, hold, failed);
+
+  const cur = curSort("holdings", "share");
+  const rows = sortRows(hold.rows, cur.key, cur.dir, "share");
+  const totalPnl = hold.rows.reduce((s, r) => s + r.pnl, 0);
+  const multi = hold.rows.filter(r => r.consensus >= 2).length;
+
+  $content.innerHTML = `
+    ${weightToolbar()}
+    <dl class="stats">
+      ${stat("Wallets holding", `${hold.activeCount}`, `of ${l.wallets.length} followed`)}
+      ${stat("Live book", fmtUsd(hold.grandTotal), "open bets, settled excluded")}
+      ${stat("Open bets", `${hold.rows.length}`, `${multi} held by 2+ wallets`)}
+      ${stat("Unrealised P&L", fmtUsd(totalPnl), "on these open bets only",
+             totalPnl >= 0 ? "pos" : "neg")}
+    </dl>
+    ${failed ? `<div class="note">${failed} wallet${failed === 1 ? "" : "s"}
+      failed to load and ${failed === 1 ? "is" : "are"} excluded from these totals.
+      Press Refresh to retry.</div>` : ""}
+    ${hold.settledCount ? `<div class="note">Left out
+      <b>${hold.settledCount.toLocaleString()} decided bet${hold.settledCount === 1 ? "" : "s"}</b>
+      — positions already pinned to 0¢ or 100¢, or cashed out. Those markets are over,
+      so they tell you nothing about what to back now, and their losses would otherwise
+      dominate the P&amp;L above.</div>` : ""}
+    <div class="panel">
+      <div class="panel-head">
+        <h2>What ${esc(l.name)} is holding</h2>
+        <p>${ui.weight === "capital"
+            ? "Share = position value ÷ the group's whole book. Big wallets move this most."
+            : "Share = average slice of each wallet's own book, so every wallet counts equally."}</p>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr>
+          <th>Market</th><th>Side</th>
+          ${th("Share", "share", cur)}
+          ${th("Wallets", "consensus", cur)}
+          ${th("Value", "value", cur)}
+          ${th("Avg entry", "avgEntry", cur)}
+          ${th("Now", "curPrice", cur)}
+          ${th("Drift", "drift", cur)}
+          ${th("P&L", "pnl", cur)}
+        </tr></thead>
+        <tbody>${rows.map(r => `
+          <tr>
+            ${marketCell(r)}
+            ${outcomeCell(r.outcome)}
+            ${meter(r.share)}
+            ${dots(r.consensus, hold.activeCount)}
+            <td class="num">${fmtUsd(r.value)}</td>
+            <td class="num dim">${fmtCents(r.avgEntry)}</td>
+            <td class="num">${fmtCents(r.curPrice)}</td>
+            <td class="num ${r.drift >= 0 ? "pos" : "neg"}">${r.drift >= 0 ? "+" : ""}${(r.drift * 100).toFixed(1)}¢</td>
+            <td class="num ${r.pnl >= 0 ? "pos" : "neg"}">${fmtUsd(r.pnl)}</td>
+          </tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+    <div class="note"><b>Drift</b> is today's price minus what the group paid on average.
+    A large positive drift means the move already happened — you'd be buying what they
+    already profited from, at a worse price than they got. Markets that have already
+    settled are left out entirely, so everything here is still tradeable.</div>`;
+  wireSort("holdings");
+  wireWeight();
+  setStatus(`${hold.rows.length} positions across ${hold.activeCount} wallets`);
+}
+
+function renderFlow(l, seq) {
+  return (async () => {
+    setStatus(`Loading trades for ${l.wallets.length} wallets…`);
+    const per = await loadListActivity(l.wallets, ui.flowHours);
+    if (stale(seq)) return;
+    const failed = per.filter(p => p.error).length;
+    const flow = aggregateFlow(per);
+    const cur = curSort("flow", "net");
+    const rows = sortRows(flow.rows, cur.key, cur.dir, "net");
+    const bought = flow.rows.reduce((s, r) => s + r.buy, 0);
+    const sold = flow.rows.reduce((s, r) => s + r.sell, 0);
+
+    $content.innerHTML = `
+      <div class="toolrow">
+        <span class="label">Window</span>
+        <select id="flowHours">${[6, 24, 72, 168].map(h =>
+          `<option value="${h}" ${h === ui.flowHours ? "selected" : ""}>${
+            h < 24 ? h + "h" : (h / 24) + "d"}</option>`).join("")}</select>
+        <span class="meta">${flow.trades} trades</span>
+      </div>
+      <dl class="stats">
+        ${stat("Bought", fmtUsd(bought), "total buys in window", "pos")}
+        ${stat("Sold", fmtUsd(sold), "total sells in window", "neg")}
+        ${stat("Net flow", fmtUsd(bought - sold), "buys minus sells",
+               bought - sold >= 0 ? "pos" : "neg")}
+        ${stat("Markets touched", `${flow.rows.length}`, `${flow.trades} trades`)}
+      </dl>
+      ${failed ? `<div class="note">${failed} wallet${failed === 1 ? "" : "s"} failed to load.</div>` : ""}
+      ${!flow.rows.length ? `<div class="panel"><div class="empty">
+          <strong>No trades in the last ${ui.flowHours < 24 ? ui.flowHours + " hours" : (ui.flowHours / 24) + " days"}</strong>
+          <p>These wallets haven't traded in this window. Try a longer one.</p>
+        </div></div>` : `
+      <div class="panel">
+        <div class="panel-head"><h2>Recent buying and selling</h2>
+          <p>Net flow per outcome, newest window first</p></div>
+        <div class="scroll"><table>
+          <thead><tr>
+            <th>Market</th><th>Side</th>
+            ${th("Net", "net", cur)}
+            ${th("Bought", "buy", cur)}
+            ${th("Sold", "sell", cur)}
+            ${th("Wallets", "traders", cur)}
+            ${th("Avg price", "vwap", cur)}
+            ${th("Last", "last", cur)}
+          </tr></thead>
+          <tbody>${rows.map(r => `
+            <tr>
+              ${marketCell(r)}
+              ${outcomeCell(r.outcome)}
+              <td class="num ${r.net >= 0 ? "pos" : "neg"}">${r.net >= 0 ? "+" : ""}${fmtUsd(r.net)}</td>
+              <td class="num dim">${fmtUsd(r.buy)}</td>
+              <td class="num dim">${fmtUsd(r.sell)}</td>
+              <td class="num">${r.traders}</td>
+              <td class="num">${fmtCents(r.vwap)}</td>
+              <td class="num dim">${ago(r.last)}</td>
+            </tr>`).join("")}</tbody>
+        </table></div>
+      </div>`}`;
+    document.getElementById("flowHours").onchange = e => {
+      ui.flowHours = +e.target.value; render();
+    };
+    wireSort("flow");
+    setStatus(`${flow.trades} trades in window`);
+  })();
+}
+
+function renderSignals(l, hold, failed) {
+  const sigs = buildSignals(hold);
+  $content.innerHTML = `
+    ${weightToolbar(true)}
+    <div class="note">
+      <b>How these are ranked.</b> Agreement first: several wallets in ${esc(l.name)}
+      independently holding the same side, with a real share of their money behind it.
+      Then how close today's price sits to what they paid — near their entry is the
+      sweet spot. Well above it and the move already happened; well below it and the
+      market has probably learned something they hadn't, which is a warning rather
+      than a discount. This is a screen for things worth researching, not a
+      recommendation, and it cannot tell skill from luck.
+    </div>
+    ${failed ? `<div class="note">${failed} wallet${failed === 1 ? "" : "s"} failed to load.</div>` : ""}
+    ${!sigs.length ? `<div class="panel"><div class="empty">
+        <strong>Nothing clears the bar right now</strong>
+        <p>No position is held by at least ${ui.minConsensus} wallets in this list.
+        Add more wallets, or lower the agreement threshold above.</p>
+      </div></div>` : `
+    <div class="panel">
+      <div class="panel-head"><h2>Worth a look</h2>
+        <p>${sigs.length} position${sigs.length === 1 ? "" : "s"} with real agreement behind them</p></div>
+      <div class="scroll"><table>
+        <thead><tr>
+          <th class="num">#</th><th>Market</th><th>Side</th>
+          <th class="num">Wallets</th><th class="num">Share</th>
+          <th class="num">They paid</th><th class="num">Now</th>
+          <th class="num">vs entry</th><th>Read</th>
+        </tr></thead>
+        <tbody>${sigs.slice(0, 40).map((r, i) => `
+          <tr>
+            <td class="num dim">${i + 1}</td>
+            ${marketCell(r)}
+            ${outcomeCell(r.outcome)}
+            ${dots(r.consensus, hold.activeCount)}
+            <td class="num">${fmtPct(r.share)}</td>
+            <td class="num dim">${fmtCents(r.avgEntry)}</td>
+            <td class="num">${fmtCents(r.curPrice)}</td>
+            <td class="num ${r.entryRoom >= 0 ? "pos" : "neg"}">${r.entryRoom >= 0 ? "+" : ""}${fmtPct(r.entryRoom, 0)}</td>
+            <td>${readPill(r)}</td>
+          </tr>`).join("")}</tbody>
+      </table></div>
+    </div>`}`;
+  wireWeight();
+  setStatus(`${sigs.length} signals`);
+}
+
+function readPill(r) {
+  if (r.entryRoom > 0.25)
+    return `<span class="pill pill-warn">down hard since they bought</span>`;
+  if (r.entryRoom > 0.05)
+    return `<span class="pill pill-accent">below their entry</span>`;
+  if (r.entryRoom > -0.05)
+    return `<span class="pill pill-yes">near their entry</span>`;
+  if (r.entryRoom > -0.25)
+    return `<span class="pill pill-other">moved up</span>`;
+  return `<span class="pill pill-warn">move already happened</span>`;
+}
+
+function weightToolbar(withThreshold = false) {
+  return `<div class="toolrow">
+    <span class="label">Weight by</span>
+    <select id="weightSel">
+      <option value="capital" ${ui.weight === "capital" ? "selected" : ""}>Dollars (whales count more)</option>
+      <option value="equal" ${ui.weight === "equal" ? "selected" : ""}>Per wallet (everyone equal)</option>
+    </select>
+    ${withThreshold ? `<span class="label">Min wallets agreeing</span>
+      <select id="minCons">${[2, 3, 4, 5].map(n =>
+        `<option value="${n}" ${n === ui.minConsensus ? "selected" : ""}>${n}</option>`).join("")}</select>` : ""}
+  </div>`;
+}
+function wireWeight() {
+  const w = document.getElementById("weightSel");
+  if (w) w.onchange = e => { ui.weight = e.target.value; render(); };
+  const m = document.getElementById("minCons");
+  if (m) m.onchange = e => { ui.minConsensus = +e.target.value; render(); };
+}
+function wireSort(v) {
+  $content.querySelectorAll("th.sortable").forEach(el => {
+    el.onclick = () => {
+      const cur = curSort(v);
+      const key = el.dataset.sort;
+      ui.sort[v] = { key, dir: cur.key === key && cur.dir === "desc" ? "asc" : "desc" };
+      render();
+    };
+  });
+}
+function stat(label, value, sub, cls = "") {
+  return `<div class="stat"><dt>${esc(label)}</dt>
+    <dd class="${cls}">${esc(value)}</dd>
+    <span class="sub">${esc(sub)}</span></div>`;
+}
+function ago(ts) {
+  if (!ts) return "—";
+  const s = Date.now() / 1000 - ts;
+  if (s < 90) return "just now";
+  if (s < 3600) return Math.round(s / 60) + "m";
+  if (s < 86400) return Math.round(s / 3600) + "h";
+  return Math.round(s / 86400) + "d";
+}
+
+/* ============================================================
+   list mutation
+   ============================================================ */
+function addWallet(listId, address, name) {
+  const l = store.lists[listId];
+  if (!l) return false;
+  const a = String(address || "").toLowerCase().trim();
+  if (!/^0x[0-9a-f]{40}$/.test(a)) return false;
+  if (l.wallets.some(w => w.address === a)) return false;
+  l.wallets.push({ address: a, name: name || short(a), label: "" });
+  return true;
+}
+
+/* ============================================================
+   events
+   ============================================================ */
+document.querySelectorAll(".tab").forEach(t => {
+  t.onclick = () => { view = t.dataset.view; render(); };
+});
+document.getElementById("refresh").onclick = () => { cache.clear(); render(); };
+
+document.getElementById("newList").onclick = () => {
+  const name = prompt("Name this list", "New list");
+  if (!name || !name.trim()) return;
+  const id = "l" + Date.now();
+  store.lists[id] = { id, name: name.trim(), wallets: [] };
+  store.activeId = id;
+  save(); view = "members"; render();
+};
+
+document.getElementById("addForm").onsubmit = e => {
+  e.preventDefault();
+  const input = document.getElementById("addAddr");
+  const raw = input.value.trim();
+  if (!raw) return;
+  const ok = addWallet(store.activeId, raw);
+  if (!ok) {
+    setStatus(/^0x[0-9a-fA-F]{40}$/.test(raw)
+      ? "That wallet is already in this list"
+      : "Not a wallet address — needs 0x followed by 40 hex characters");
+    return;
+  }
+  input.value = "";
+  save();
+  setStatus(`Added to ${activeList().name}`);
+  render();
+};
+
+/* delegated clicks: list switch, add-from-leaderboard, remove member */
+document.addEventListener("click", e => {
+  const li = e.target.closest("[data-list]");
+  if (li) { store.activeId = li.dataset.list; save(); render(); return; }
+
+  const add = e.target.closest("[data-add]");
+  if (add) {
+    const ok = addWallet(store.activeId, add.dataset.add, add.dataset.name);
+    save(); renderRail();
+    setStatus(ok ? `Added ${add.dataset.name} to ${activeList().name}`
+                 : "Already in this list");
+    return;
+  }
+
+  const rm = e.target.closest("[data-rm]");
+  if (rm) {
+    const l = activeList();
+    l.wallets = l.wallets.filter(w => w.address !== rm.dataset.rm);
+    save(); render();
+  }
+});
+
+render();
+</script>
+</body>
+</html>
