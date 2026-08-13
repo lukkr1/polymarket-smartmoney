@@ -13,6 +13,7 @@ Usage:  python daily_report.py [--wallets 40] [--out report.html]
 import argparse
 import json
 import math
+import re
 import urllib.request
 import urllib.error
 from concurrent.futures import ThreadPoolExecutor
@@ -55,7 +56,13 @@ def clean_name(name, addr):
     return name if len(name) <= 26 else name[:25] + "…"
 
 
+LB_CAP = 50   # the API returns 50 rows however high `limit` goes
+
+
 def leaderboard(window, limit):
+    if limit > LB_CAP:
+        print(f"note: Polymarket caps this board at {LB_CAP} wallets; "
+              f"asked for {limit}, will get {LB_CAP}")
     rows = get(f"{LB}/profit?window={window}&limit={limit}")
     out = []
     for r in rows:
@@ -144,7 +151,10 @@ def aggregate(fetched):
             e["curPrice"] = float(p.get("curPrice") or e["curPrice"])
             e["holders"].append({
                 "name": w["name"],
+                "address": w["address"],
                 "value": value,
+                "size": size,
+                "avg_price": float(p.get("avgPrice") or 0),
                 "share_of_own": (value / wtot) if wtot > 0 else 0.0,
             })
 
@@ -221,19 +231,16 @@ def read_pill(room):
 
 
 CSS = """
-:root{--ground:#F7F8F7;--surface:#FFF;--surface-2:#F0F3F1;--line:#DCE3DF;
---ink:#12201C;--ink-2:#4A5C55;--ink-3:#7A8A83;--accent:#0E7C66;--accent-soft:#E2F0EB;
---pos:#1A7F4B;--neg:#B4453A;--warn:#B0761E;--pos-soft:#E4F1E8;--neg-soft:#F8E7E4;
+:root{--ground:#080B0A;--surface:#101614;--surface-2:#171F1C;--surface-3:#1E2825;
+--line:#232E2A;--ink:#E6EDEA;--ink-2:#9EAFA8;--ink-3:#6B7C76;--accent:#10D296;
+--accent-soft:#0D2C24;--pos:#10D296;--neg:#F0705F;--warn:#E0A94E;
+--pos-soft:#0D2C24;--neg-soft:#2E1815;
 --mono:ui-monospace,"Cascadia Mono","SF Mono",Menlo,Consolas,monospace;
 --sans:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
---ground:#0E1513;--surface:#16201D;--surface-2:#1C2723;--line:#2A3733;
---ink:#E8EFEB;--ink-2:#A3B3AC;--ink-3:#74857E;--accent:#4FC0A3;--accent-soft:#17332C;
---pos:#52C07E;--neg:#E2796C;--warn:#D9A44A;--pos-soft:#142E20;--neg-soft:#331C19}}
-:root[data-theme="dark"]{--ground:#0E1513;--surface:#16201D;--surface-2:#1C2723;
---line:#2A3733;--ink:#E8EFEB;--ink-2:#A3B3AC;--ink-3:#74857E;--accent:#4FC0A3;
---accent-soft:#17332C;--pos:#52C07E;--neg:#E2796C;--warn:#D9A44A;
---pos-soft:#142E20;--neg-soft:#331C19}
+:root[data-theme="light"]{--ground:#F7F8F7;--surface:#FFF;--surface-2:#F0F3F1;
+--surface-3:#E7ECE9;--line:#DCE3DF;--ink:#12201C;--ink-2:#4A5C55;--ink-3:#7A8A83;
+--accent:#0E7C66;--accent-soft:#E2F0EB;--pos:#1A7F4B;--neg:#B4453A;--warn:#B0761E;
+--pos-soft:#E4F1E8;--neg-soft:#F8E7E4}
 *{box-sizing:border-box}
 body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);
 font-size:14px;line-height:1.55;-webkit-font-smoothing:antialiased}
@@ -287,7 +294,57 @@ font-size:12.5px;color:var(--ink-2)}
 .note b{color:var(--ink)}
 footer{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
 border-top:1px solid var(--line);padding-top:14px}
+tr.wb-row>td{padding:0;border-bottom:1px solid var(--line)}
+details.wb summary{list-style:none;cursor:pointer;padding:7px 12px 9px;
+font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+details.wb summary::-webkit-details-marker{display:none}
+details.wb summary:hover{color:var(--accent)}
+details.wb summary::before{content:"\\25B8 ";display:inline-block;
+transition:transform .12s;margin-right:3px}
+details.wb[open] summary::before{transform:rotate(90deg)}
+details.wb .who{display:flex;align-items:center;gap:10px;padding:7px 12px;
+border-top:1px solid var(--line);font-size:12.5px}
+details.wb .who .av{width:24px;height:24px;border-radius:50%;flex:none;
+background:var(--surface-3);border:1px solid var(--line);display:grid;
+place-items:center;font-family:var(--mono);font-size:9px;font-weight:600;
+color:var(--ink-3);text-transform:uppercase}
+details.wb .who .nm{font-weight:500;overflow:hidden;text-overflow:ellipsis;
+white-space:nowrap}
+details.wb .who .ad{font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+details.wb .who .nums{margin-left:auto;display:flex;gap:14px;
+font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink-2);
+white-space:nowrap}
+details.wb .who .nums b{color:var(--ink);font-weight:600}
+@media (max-width:640px){details.wb .who{flex-wrap:wrap}
+details.wb .who .nums{margin-left:0;width:100%;gap:10px;font-size:11.5px}}
 """
+
+
+def initials(name, address):
+    """Same rule as the tracker: a name that is really just an address gets
+    initials from the address instead of a meaningless '0x'."""
+    base = re.sub(r"^0x", "", str(name or ""), flags=re.I)
+    src = base if re.match(r"^[a-z0-9]", base, re.I) else str(address)[2:]
+    return esc(src[:2].upper())
+
+
+def wallet_breakdown(r):
+    """Who actually holds this, what each paid, expandable without JavaScript.
+
+    The headline says five wallets agree; this says which five and at what
+    price, which is the part you can act on."""
+    holders = sorted(r["holders"], key=lambda h: -h["value"])
+    rows = "".join(f"""<div class="who">
+<span class="av">{initials(h['name'], h['address'])}</span>
+<span><span class="nm">{esc(h['name'])}</span><br>
+<span class="ad">{esc(h['address'][:6])}…{esc(h['address'][-4:])}</span></span>
+<span class="nums"><span>{h['size']:,.0f} shares</span>
+<span>avg {h['avg_price']*100:.1f}¢</span>
+<span>{h['share_of_own']*100:.1f}% of book</span>
+<b>{usd(h['value'])}</b></span></div>""" for h in holders)
+    return (f'<tr class="wb-row"><td colspan="10"><details class="wb">'
+            f'<summary>{len(holders)} wallets — who holds it, and what they paid'
+            f'</summary>{rows}</details></td></tr>')
 
 
 def render(agg, ranked, meta):
@@ -317,6 +374,7 @@ def render(agg, ranked, meta):
 <td class="num">{r['curPrice']*100:.1f}¢</td>
 <td class="num {'pos' if room >= 0 else 'neg'}">{room:+.0f}%</td>
 <td><span class="pill pill-{kind}">{esc(label)}</span></td></tr>""")
+        rows_html.append(wallet_breakdown(r))
 
     empty = ('<div class="note">No position is held by at least '
              f'{MIN_CONSENSUS} of these wallets right now. That is a real '

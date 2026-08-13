@@ -24,13 +24,17 @@ then open <http://localhost:8765/>. Press Ctrl+C in that window to stop it.
 
 | Tab | What it's for |
 |---|---|
-| **Discover** | Top wallets by profit or volume, over 1d / 7d / 30d / all time. Add them to a list one at a time, or add the top 10/20/50 in one click. |
+| **Discover** | Every top trader Polymarket publishes — a few hundred — with profit and volume for 1d / 7d / 30d / all time on one row. Sort by any window, search by name or address, filter out small books, then add wallets one at a time or in bulk. |
 | **Holdings** | What your list currently has money in — share of the group's capital per market, how many wallets agree, what they paid vs today's price. |
 | **Flow** | What they've been buying and selling over the last 6h to 7 days, netted per outcome. |
 | **Signals** | The shortlist: positions several wallets independently hold, ranked with the ones still near their entry price first. |
 | **Members** | Rename lists, remove wallets, copy the addresses out. |
 
-### Two things worth knowing
+**Click any row in Holdings or Signals** for the breakdown behind the number:
+which wallets hold it, how many shares each, the price each of them paid, what
+it's worth now, and every buy and sell they've made in it over the last 30 days.
+
+### Three things worth knowing
 
 **Weighting.** The *Weight by* dropdown changes who counts. "Dollars" lets the
 biggest wallets dominate the percentages. "Per wallet" averages each wallet's own
@@ -41,6 +45,14 @@ $5M. They can tell very different stories — check both.
 closing the tab but won't follow you to another device or browser. Use *Copy
 addresses* in Members to move a list somewhere else.
 
+**A dash is not a zero.** Polymarket publishes only the top 50 wallets per
+board, and it refuses to page past that — `limit=500` returns 50, and `offset`
+is ignored. Discover works around it by merging all eight boards (profit and
+volume × four windows), which is where the few hundred traders come from. The
+gap is that a wallet in the 1d top 50 but outside the 30d top 50 has no 30d
+figure anywhere, so that cell shows "—". It means unknown, never zero, and those
+rows sort to the bottom of that column rather than pretending to be worthless.
+
 ## 2. The daily report — runs without you
 
 A GitHub Actions workflow runs every morning at 05:00 UTC (07:00 Ljubljana in
@@ -49,7 +61,8 @@ which positions three or more of them independently hold, and commits a rebuilt
 `report.html`. It runs on GitHub's servers, so your computer can be switched off.
 
 - **The report:** <https://lukkr1.github.io/polymarket-smartmoney/report.html>
-  — same link every day, always the latest version.
+  — same link every day, always the latest version. Every row expands to show
+  which wallets hold that position and what each of them paid.
 - **Run it early:** Actions tab → *Daily report* → *Run workflow*.
 - **If it breaks:** GitHub emails you. The workflow also fails loudly rather than
   publishing an empty page.
@@ -61,7 +74,9 @@ which positions three or more of them independently hold, and commits a rebuilt
 
 Edit `.github/workflows/daily-report.yml`:
 
-- `--wallets 40` — how many top wallets to read.
+- `--wallets 40` — how many top wallets to read. 50 is the ceiling; the API
+  returns 50 rows however high you set it, and the script says so if you ask
+  for more.
 - `--window 30d` — ranking window: `1d`, `7d`, `30d`, or `all`.
 - `cron: "0 5 * * *"` — when it runs, always in UTC.
 

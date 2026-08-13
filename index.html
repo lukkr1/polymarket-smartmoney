@@ -8,17 +8,46 @@
   /* minimal reset (the hosted-artifact version gets this from its host) */
   *, *::before, *::after { box-sizing: border-box; }
   body { margin: 0; }
-  /* ---------- tokens: light is the base, both dark states redefine ---------- */
+  /* ---------- tokens: dark is the base, light is opt-in ----------
+     Dark is what this thing is, so it renders dark for everyone regardless of
+     the OS setting. Light is a deliberate, fully specified palette rather than
+     a washed-out inversion, reached through the toggle in the sidebar and
+     remembered per browser. */
   :root {
+    --ground: #080B0A;
+    --surface: #101614;
+    --surface-2: #171F1C;
+    --surface-3: #1E2825;
+    --line: #232E2A;
+    --line-strong: #33413C;
+    --ink: #E6EDEA;
+    --ink-2: #9EAFA8;
+    --ink-3: #6B7C76;
+    --accent: #10D296;
+    --accent-2: #0B9E71;
+    --accent-soft: #0D2C24;
+    --on-accent: #04120D;
+    --pos: #10D296;
+    --neg: #F0705F;
+    --warn: #E0A94E;
+    --pos-soft: #0D2C24;
+    --neg-soft: #2E1815;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 12px 32px -14px rgba(0, 0, 0, .7);
+    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  :root[data-theme="light"] {
     --ground: #F7F8F7;
     --surface: #FFFFFF;
     --surface-2: #F0F3F1;
+    --surface-3: #E7ECE9;
     --line: #DCE3DF;
     --line-strong: #C2CDC7;
     --ink: #12201C;
     --ink-2: #4A5C55;
     --ink-3: #7A8A83;
     --accent: #0E7C66;
+    --accent-2: #0A6151;
     --accent-soft: #E2F0EB;
     --on-accent: #FBFEFD;
     --pos: #1A7F4B;
@@ -27,48 +56,6 @@
     --pos-soft: #E4F1E8;
     --neg-soft: #F8E7E4;
     --shadow: 0 1px 2px rgba(18, 32, 28, .06), 0 8px 24px -12px rgba(18, 32, 28, .12);
-    --mono: ui-monospace, "Cascadia Mono", "SF Mono", Menlo, Consolas, monospace;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --ground: #0E1513;
-      --surface: #16201D;
-      --surface-2: #1C2723;
-      --line: #2A3733;
-      --line-strong: #3C4C46;
-      --ink: #E8EFEB;
-      --ink-2: #A3B3AC;
-      --ink-3: #74857E;
-      --accent: #4FC0A3;
-      --accent-soft: #17332C;
-      --on-accent: #08120F;
-      --pos: #52C07E;
-      --neg: #E2796C;
-      --warn: #D9A44A;
-      --pos-soft: #142E20;
-      --neg-soft: #331C19;
-      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
-    }
-  }
-  :root[data-theme="dark"] {
-    --ground: #0E1513;
-    --surface: #16201D;
-    --surface-2: #1C2723;
-    --line: #2A3733;
-    --line-strong: #3C4C46;
-    --ink: #E8EFEB;
-    --ink-2: #A3B3AC;
-    --ink-3: #74857E;
-    --accent: #4FC0A3;
-    --accent-soft: #17332C;
-    --on-accent: #08120F;
-    --pos: #52C07E;
-    --neg: #E2796C;
-    --warn: #D9A44A;
-    --pos-soft: #142E20;
-    --neg-soft: #331C19;
-    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px -12px rgba(0, 0, 0, .5);
   }
 
   * { box-sizing: border-box; }
@@ -273,11 +260,138 @@
 
   .row-actions { display: flex; gap: 5px; justify-content: flex-end; }
 
+  /* ---------- trader identity ---------- */
+  /* Most wallets have no profile image, so the initials chip is the common
+     case, not the fallback — it gets the same care as the photo. */
+  .trader { display: flex; align-items: center; gap: 9px; min-width: 190px; }
+  .av {
+    position: relative; width: 26px; height: 26px; border-radius: 50%; flex: none;
+    background: var(--surface-3); border: 1px solid var(--line);
+    display: grid; place-items: center; overflow: hidden;
+    font-family: var(--mono); font-size: 9.5px; font-weight: 600;
+    color: var(--ink-3); text-transform: uppercase; letter-spacing: .02em;
+  }
+  /* The photo covers the initials when it loads and removes itself when it
+     doesn't, so a broken avatar URL degrades to initials rather than a hole. */
+  .av img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .av-lg { width: 32px; height: 32px; font-size: 11px; }
+
+  /* ---------- clickable rows ---------- */
+  tr.clickable { cursor: pointer; }
+  tr.clickable:hover { background: var(--surface-2); }
+  tr.clickable:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .chev { color: var(--ink-3); font-family: var(--mono); }
+  tr.clickable:hover .chev { color: var(--accent); }
+
+  /* ---------- search + filter controls ---------- */
+  .search { min-width: 190px; font-size: 12.5px; }
+  .search::placeholder { color: var(--ink-3); }
+
+  /* ---------- detail sheet ---------- */
+  .sheet-back {
+    position: fixed; inset: 0; background: rgba(0, 0, 0, .58);
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 40px 18px; overflow-y: auto; z-index: 50;
+  }
+  .sheet {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow); width: min(720px, 100%); overflow: hidden;
+  }
+  .sheet-head { padding: 18px 20px 16px; border-bottom: 1px solid var(--line); }
+  .sheet-head .top { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+  .sheet-head h2 {
+    margin: 0; font-size: 16px; font-weight: 620; line-height: 1.35; letter-spacing: -.01em;
+  }
+  .sheet-close {
+    margin-left: auto; background: none; border: none; color: var(--ink-3);
+    font-size: 18px; line-height: 1; padding: 2px 6px; border-radius: 4px;
+  }
+  .sheet-close:hover { color: var(--ink); background: var(--surface-2); }
+  .sheet-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 9px; }
+  .tile {
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 7px;
+    padding: 12px 14px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .tile .k {
+    font-family: var(--mono); font-size: 9.5px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .1em; color: var(--ink-3);
+  }
+  .tile .v {
+    font-family: var(--mono); font-size: 20px; font-weight: 600;
+    font-variant-numeric: tabular-nums; letter-spacing: -.02em;
+  }
+
+  .sheet-link {
+    display: block; text-align: center; padding: 11px; border-radius: 7px;
+    border: 1px solid var(--line-strong); background: var(--surface-2);
+    color: var(--ink-2); text-decoration: none;
+    font-family: var(--mono); font-size: 12.5px;
+  }
+  .sheet-link:hover { color: var(--accent); border-color: var(--accent); }
+
+  .sheet-sec { display: flex; flex-direction: column; gap: 2px; }
+  .sheet-sec > h3 {
+    margin: 0 0 8px; font-size: 13px; font-weight: 620;
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  .sheet-sec > h3 .c { font-family: var(--mono); font-size: 11px; color: var(--ink-3); font-weight: 400; }
+
+  .hold-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 4px; border-bottom: 1px solid var(--line);
+  }
+  .hold-row:last-child { border-bottom: none; }
+  .hold-row .id { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+  .hold-row .id .nm { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hold-row .id .pl { font-family: var(--mono); font-size: 10.5px; }
+  .hold-row .nums {
+    margin-left: auto; display: flex; align-items: center; gap: 14px;
+    font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums;
+    color: var(--ink-2); white-space: nowrap;
+  }
+  .hold-row .nums b { color: var(--ink); font-weight: 600; }
+  .copy {
+    background: none; border: none; color: var(--ink-3); padding: 3px 5px;
+    border-radius: 4px; font-size: 12px;
+  }
+  .copy:hover { color: var(--accent); background: var(--surface-2); }
+
+  .trade-row {
+    display: flex; align-items: baseline; gap: 10px; padding: 7px 4px;
+    border-bottom: 1px solid var(--line); font-size: 12.5px;
+  }
+  .trade-row:last-child { border-bottom: none; }
+  .trade-row .nm { min-width: 120px; color: var(--ink-2); }
+  .trade-row .when { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--ink-3); }
+  .trade-row .amt { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  .skel { color: var(--ink-3); font-size: 12.5px; padding: 10px 4px; }
+
   @media (max-width: 820px) {
     .app { grid-template-columns: 1fr; }
-    .rail { border-right: none; border-bottom: 1px solid var(--line); }
+    .rail {
+      border-right: none; border-bottom: 1px solid var(--line);
+      padding: 14px; gap: 14px;
+    }
+    /* the rail's push-to-bottom footer makes no sense once it's a top strip */
+    .rail .rail-foot { margin-top: 0 !important; }
+    .content { padding: 16px 14px; gap: 14px; }
+    .topbar { padding: 11px 14px; gap: 10px; }
+    .tabs { overflow-x: auto; }
+    .sheet-back { padding: 0; align-items: stretch; }
+    .sheet { border-radius: 0; border: none; min-height: 100%; }
   }
 </style>
+<script>
+  /* Applied before first paint: a reader who chose light shouldn't get a
+     dark flash on every load. */
+  try {
+    var t = localStorage.getItem("pmw.theme");
+    if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+  } catch (e) { /* private mode — fall back to the media query */ }
+</script>
 </head>
 <body>
 
@@ -305,11 +419,12 @@
       </form>
     </div>
 
-    <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+    <div class="rail-foot" style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
       <a href="report.html" class="meta"
          style="color:var(--accent);text-decoration:none;font-weight:600">
         Today's report &rarr;
       </a>
+      <button class="btn-sm btn-ghost" id="themeBtn" style="align-self:flex-start">Light mode</button>
       <span class="meta">
         Data: Polymarket public API.<br />Lists saved in this browser.
       </span>
@@ -358,6 +473,8 @@ const short = a => a ? a.slice(0, 6) + "…" + a.slice(-4) : "";
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c =>
   ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
+const fmtNum = n => (n == null || !isFinite(n)) ? "—" : Math.round(n).toLocaleString();
+
 /* A wallet's display name is often just its own address + timestamp — useless. */
 function cleanName(name, addr) {
   if (!name) return short(addr);
@@ -383,13 +500,29 @@ function save() {
 }
 const activeList = () => store.lists[store.activeId] || Object.values(store.lists)[0];
 
+/* ---------- theme ---------- */
+const THEME_KEY = "pmw.theme";
+const currentTheme = () => document.documentElement.dataset.theme || "dark";
+function wireTheme() {
+  const btn = document.getElementById("themeBtn");
+  const paint = () => { btn.textContent = currentTheme() === "dark" ? "Light mode" : "Dark mode"; };
+  btn.onclick = () => {
+    const next = currentTheme() === "dark" ? "light" : "dark";
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem(THEME_KEY, next); } catch (e) { /* not worth a warning */ }
+    paint();
+  };
+  paint();
+}
+
 /* ---------- ui state ---------- */
 let view = "discover";
 const ui = {
-  lbWindow: "30d", lbMetric: "profit", lbLimit: 50,
   weight: "capital",          // capital | equal
   flowHours: 24,
   minConsensus: 2,
+  lbSearch: "",               // Discover: name/address filter
+  lbMinVol: 0,                // Discover: minimum 30d volume
   sort: {}                    // per-view {key, dir}
 };
 
@@ -434,16 +567,69 @@ function setProgress(f) {
 /* ============================================================
    data loaders
    ============================================================ */
-async function loadLeaderboard() {
-  const url = `${LB}/${ui.lbMetric}?window=${ui.lbWindow}&limit=${ui.lbLimit}`;
-  const rows = await getJSON(url, { ttl: 120000 });
-  if (!Array.isArray(rows)) throw new Error("Unexpected leaderboard response");
-  return rows.map((r, idx) => ({
-    rank: idx + 1,
-    address: (r.proxyWallet || "").toLowerCase(),
-    name: cleanName(r.name || r.pseudonym, r.proxyWallet),
-    amount: Number(r.amount) || 0
+/* The leaderboard is capped at 50 rows per board, server-side: `limit` above 50
+   is ignored and there is no offset/page/skip. One board therefore can never
+   show more than 50 traders.
+
+   What it will do is answer eight different questions — profit and volume, over
+   four windows — and the answers overlap only partly. Merging all eight gives a
+   few hundred distinct wallets and, more usefully, puts every window on one row,
+   so a trader can be judged across timeframes instead of one board at a time.
+
+   The cost is honest gaps: a wallet in the 1d top 50 but not the 30d top 50 has
+   no 30d figure, and there is no endpoint to fill it in. Those stay null and are
+   rendered as "—" — never as zero, which would read as "made nothing". */
+const LB_WINDOWS = ["1d", "7d", "30d", "all"];
+const LB_SUFFIX = { "1d": "1d", "7d": "7d", "30d": "30d", "all": "All" };
+const LB_COLS = [
+  { key: "p1d", label: "P/L 1d" }, { key: "p7d", label: "P/L 7d" },
+  { key: "p30d", label: "P/L 30d" }, { key: "pAll", label: "P/L all" },
+  { key: "v30d", label: "Vol 30d" }, { key: "vAll", label: "Vol all" }
+];
+
+async function loadLeaderboardUniverse() {
+  const jobs = [];
+  for (const metric of ["profit", "volume"])
+    for (const w of LB_WINDOWS)
+      jobs.push({ prefix: metric === "profit" ? "p" : "v", w,
+                  url: `${LB}/${metric}?window=${w}&limit=50` });
+
+  const results = await mapLimit(jobs, 4, j => getJSON(j.url, { ttl: 120000 }));
+
+  const by = new Map();
+  let failed = 0;
+  results.forEach((rows, i) => {
+    if (!Array.isArray(rows)) { failed++; return; }
+    const j = jobs[i];
+    const col = j.prefix + LB_SUFFIX[j.w];
+    rows.forEach((r, idx) => {
+      const address = (r.proxyWallet || "").toLowerCase();
+      if (!/^0x[0-9a-f]{40}$/.test(address)) return;
+      let e = by.get(address);
+      if (!e) {
+        e = {
+          address, name: cleanName(r.name || r.pseudonym, r.proxyWallet),
+          avatar: "", best: Infinity,
+          p1d: null, p7d: null, p30d: null, pAll: null,
+          v1d: null, v7d: null, v30d: null, vAll: null
+        };
+        by.set(address, e);
+      }
+      if (!e.avatar) e.avatar = r.profileImageOptimized || r.profileImage || "";
+      e[col] = Number(r.amount) || 0;
+      e.best = Math.min(e.best, idx + 1);   // best placing on any board
+    });
+  });
+
+  // Every board failing is a real failure; a few failing is a thinner list.
+  if (!by.size) throw new Error("No leaderboard data came back");
+
+  const rows = [...by.values()].map(e => ({
+    ...e,
+    ret30: (e.p30d != null && e.v30d > 0) ? e.p30d / e.v30d : null,
+    retAll: (e.pAll != null && e.vAll > 0) ? e.pAll / e.vAll : null
   }));
+  return { rows, failed, boards: jobs.length };
 }
 
 /* Positions for every wallet in a list, plus each wallet's own total. */
@@ -555,7 +741,8 @@ function aggregateHoldings(perWallet, weightMode) {
       e.shareSum += personalShare;
       e.holders.push({
         address: wallet.address, name: wallet.label || wallet.name,
-        value, personalShare, avgPrice: Number(p.avgPrice) || 0
+        value, personalShare, size, avgPrice: Number(p.avgPrice) || 0,
+        pnl: Number(p.cashPnl) || 0
       });
     }
   }
@@ -645,15 +832,25 @@ function buildSignals(hold) {
 /* ============================================================
    sorting
    ============================================================ */
+/* Missing is not zero. A wallet outside a board's top 50 has no figure for that
+   column, and sorting it as 0 would rank it above every trader who actually lost
+   money — and, ascending, put the unknowns first. So blanks sink to the bottom
+   whichever way the column is sorted, and the reversal happens inside the
+   comparator rather than by reversing the finished array. */
 function sortRows(rows, key, dir, fallback) {
   const k = key || fallback;
-  const s = [...rows].sort((a, b) => {
+  const asc = dir === "asc";
+  const gone = v => v == null || v === "" || (typeof v === "number" && !isFinite(v));
+  return [...rows].sort((a, b) => {
     const x = a[k], y = b[k];
-    if (typeof x === "string" || typeof y === "string")
-      return String(x ?? "").localeCompare(String(y ?? ""));
-    return (Number(y) || 0) - (Number(x) || 0);
+    if (gone(x) && gone(y)) return 0;
+    if (gone(x)) return 1;
+    if (gone(y)) return -1;
+    const c = (typeof x === "string" || typeof y === "string")
+      ? String(x).localeCompare(String(y))
+      : (Number(y) || 0) - (Number(x) || 0);
+    return asc ? -c : c;
   });
-  return dir === "asc" ? s.reverse() : s;
 }
 function th(label, key, cur, cls = "num") {
   const on = cur.key === key;
@@ -665,6 +862,16 @@ function curSort(v, fallback) {
   return ui.sort[v];
 }
 
+/* Avatar: initials underneath, photo on top when there is one. An avatar URL
+   that 404s removes itself and leaves the initials showing. */
+function avatar(r, big) {
+  const src = r.avatar || (universe && universe.get(r.address) || {}).avatar || "";
+  const base = String(r.name || "").replace(/^0x/i, "");
+  const ini = (/^[a-z0-9]/i.test(base) ? base : r.address.slice(2)).slice(0, 2);
+  return `<span class="av${big ? " av-lg" : ""}">${esc(ini)}${
+    src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ""}</span>`;
+}
+
 /* market link + outcome pill */
 function marketCell(r) {
   const href = r.eventSlug ? `https://polymarket.com/event/${encodeURIComponent(r.eventSlug)}`
@@ -674,11 +881,7 @@ function marketCell(r) {
     <div class="sub">${r.endDate ? "ends " + esc(String(r.endDate).slice(0, 10)) : ""}</div>
   </td>`;
 }
-function outcomeCell(o) {
-  const t = String(o || "").toLowerCase();
-  const cls = t === "yes" ? "pill-yes" : t === "no" ? "pill-no" : "pill-other";
-  return `<td><span class="pill ${cls}">${esc(o || "?")}</span></td>`;
-}
+function outcomeCell(o) { return `<td>${pill(o)}</td>`; }
 function meter(share) {
   const w = Math.max(2, Math.min(100, share * 100));
   return `<td class="num"><span class="meter">
@@ -733,28 +936,36 @@ async function render() {
 }
 
 /* ---------- Discover ---------- */
+let universe = null;         // shared with the drill-down, for each holder's all-time P&L
+let keepSearchFocus = false; // survives the re-render the search box triggers
+
 async function renderDiscover(seq) {
-  setStatus("Loading leaderboard…");
-  const rows = await loadLeaderboard();
+  setStatus("Loading eight leaderboards…");
+  const uni = await loadLeaderboardUniverse();
   if (stale(seq)) return;
-  const cur = curSort("discover", "amount");
-  const sorted = sortRows(rows, cur.key, cur.dir, "amount");
-  const metricName = ui.lbMetric === "profit" ? "Profit" : "Volume";
+  universe = new Map(uni.rows.map(r => [r.address, r]));
+
+  const cur = curSort("discover", "p30d");
+  const q = ui.lbSearch.trim().toLowerCase();
+  const filtered = uni.rows.filter(r =>
+    (!q || r.name.toLowerCase().includes(q) || r.address.includes(q)) &&
+    (!ui.lbMinVol || (r.v30d != null && r.v30d >= ui.lbMinVol)));
+  const sorted = sortRows(filtered, cur.key, cur.dir, "p30d");
   const lists = Object.values(store.lists);
+  const sortLabel = (LB_COLS.find(c => c.key === cur.key) || {}).label || "Return";
 
   $content.innerHTML = `
     <div class="toolrow">
-      <span class="label">Window</span>
-      <select id="lbWindow">${["1d", "7d", "30d", "all"].map(w =>
-        `<option value="${w}" ${w === ui.lbWindow ? "selected" : ""}>${w === "all" ? "All time" : w}</option>`).join("")}</select>
-      <span class="label">Rank by</span>
-      <select id="lbMetric">
-        <option value="profit" ${ui.lbMetric === "profit" ? "selected" : ""}>Profit</option>
-        <option value="volume" ${ui.lbMetric === "volume" ? "selected" : ""}>Volume</option>
+      <span class="label">Sort by</span>
+      <select id="lbSort">
+        ${LB_COLS.map(c => `<option value="${c.key}" ${c.key === cur.key ? "selected" : ""}>${esc(c.label)}</option>`).join("")}
+        <option value="ret30" ${cur.key === "ret30" ? "selected" : ""}>Return 30d</option>
       </select>
-      <span class="label">Show</span>
-      <select id="lbLimit">${[25, 50, 100, 200].map(n =>
-        `<option value="${n}" ${n === ui.lbLimit ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <input class="search" id="lbSearch" placeholder="Search name or 0x…"
+             spellcheck="false" value="${esc(ui.lbSearch)}" />
+      <span class="label">Min 30d volume</span>
+      <select id="lbMinVol">${[0, 10000, 100000, 1000000].map(n =>
+        `<option value="${n}" ${n === ui.lbMinVol ? "selected" : ""}>${n ? fmtUsd(n) : "Any"}</option>`).join("")}</select>
       <div class="spacer"></div>
       <span class="label">Add top</span>
       <select id="bulkN">${[10, 20, 50].map(n => `<option value="${n}">${n}</option>`).join("")}</select>
@@ -764,36 +975,56 @@ async function renderDiscover(seq) {
       <button class="btn-primary btn-sm" id="bulkAdd">Add</button>
     </div>
 
+    <dl class="stats">
+      ${stat("Traders found", String(uni.rows.length), `across ${uni.boards - uni.failed} of ${uni.boards} boards`)}
+      ${stat("Showing", String(sorted.length), q || ui.lbMinVol ? "after filters" : "no filters applied")}
+      ${stat("Sorted by", sortLabel, cur.dir === "desc" ? "highest first" : "lowest first")}
+      ${stat("In your lists", String(new Set(Object.values(store.lists).flatMap(l => l.wallets.map(w => w.address))).size), "unique wallets followed")}
+    </dl>
+
+    ${uni.failed ? `<div class="note">${uni.failed} of ${uni.boards} leaderboards failed to
+      load, so some columns are thinner than usual. Press Refresh to retry.</div>` : ""}
+
     <div class="note">
       <b>Read this ranking carefully.</b> It sorts by raw dollars, which tracks bankroll size
       as much as skill — a whale who risks millions outranks a sharper trader with a smaller
-      book. The <b>Return</b> column below (profit ÷ volume) is the closer thing to an edge
-      measure. Neither separates skill from luck over a short window.
+      book. <b>Return</b> (profit ÷ volume) is the closer thing to an edge measure. Neither
+      separates skill from luck over a short window. A <b>dash means unknown</b>, not zero:
+      Polymarket only publishes the top 50 per board, so a trader outside that cut for a
+      given window has no figure there.
     </div>
 
+    ${!sorted.length ? `<div class="panel"><div class="empty">
+        <strong>No trader matches those filters</strong>
+        <p>Clear the search box or lower the minimum volume.</p>
+      </div></div>` : `
     <div class="panel">
       <div class="panel-head">
-        <h2>Top wallets by ${esc(metricName.toLowerCase())}</h2>
-        <p>${rows.length} wallets · ${ui.lbWindow === "all" ? "all time" : "last " + ui.lbWindow}</p>
+        <h2>Top traders</h2>
+        <p>${sorted.length} of ${uni.rows.length} wallets · every window on one row</p>
       </div>
       <div class="scroll">
         <table>
           <thead><tr>
             <th class="num">#</th>
-            <th>Wallet</th>
-            ${th(metricName, "amount", cur)}
-            ${th("Return", "roi", cur)}
+            <th>Trader</th>
+            ${LB_COLS.map(c => th(c.label, c.key, cur)).join("")}
+            ${th("Return 30d", "ret30", cur)}
             <th class="num">Add to list</th>
           </tr></thead>
-          <tbody>${sorted.map(r => `
+          <tbody>${sorted.map((r, i) => `
             <tr>
-              <td class="num dim">${r.rank}</td>
-              <td><div class="who">
-                <span class="nm">${esc(r.name)}</span>
-                <span class="ad">${esc(short(r.address))}</span>
+              <td class="num dim">${i + 1}</td>
+              <td><div class="trader">
+                ${avatar(r)}
+                <span class="who">
+                  <span class="nm">${esc(r.name)}</span>
+                  <span class="ad">${esc(short(r.address))}</span>
+                </span>
               </div></td>
-              <td class="num ${r.amount >= 0 ? "pos" : "neg"}">${fmtUsd(r.amount)}</td>
-              <td class="num dim">—</td>
+              ${LB_COLS.map(c => money(r[c.key], c.key[0] === "v")).join("")}
+              <td class="num ${r.ret30 == null ? "dim" : r.ret30 >= 0 ? "pos" : "neg"}">${
+                r.ret30 == null ? "—" : fmtPct(r.ret30, 1)}</td>
               <td class="num"><div class="row-actions">
                 <button class="btn-sm" data-add="${esc(r.address)}"
                         data-name="${esc(r.name)}">+ ${esc(activeList().name)}</button>
@@ -801,15 +1032,24 @@ async function renderDiscover(seq) {
             </tr>`).join("")}</tbody>
         </table>
       </div>
-    </div>`;
+    </div>`}`;
 
-  // The profit board has no volume field and vice-versa, so Return needs the
-  // other board too. Fetch it lazily and fill the column in place.
-  fillReturnColumn(sorted, seq);
-
-  document.getElementById("lbWindow").onchange = e => { ui.lbWindow = e.target.value; render(); };
-  document.getElementById("lbMetric").onchange = e => { ui.lbMetric = e.target.value; render(); };
-  document.getElementById("lbLimit").onchange = e => { ui.lbLimit = +e.target.value; render(); };
+  document.getElementById("lbSort").onchange = e => {
+    ui.sort.discover = { key: e.target.value, dir: "desc" }; render();
+  };
+  document.getElementById("lbMinVol").onchange = e => {
+    ui.lbMinVol = +e.target.value; render();
+  };
+  const $search = document.getElementById("lbSearch");
+  $search.oninput = debounce(e => {
+    ui.lbSearch = e.target.value; keepSearchFocus = true; render();
+  }, 250);
+  // The re-render replaces the input the user is typing into, so put the caret back.
+  if (keepSearchFocus) {
+    keepSearchFocus = false;
+    $search.focus();
+    $search.setSelectionRange($search.value.length, $search.value.length);
+  }
   document.getElementById("bulkAdd").onclick = () => {
     const n = +document.getElementById("bulkN").value;
     const listId = document.getElementById("bulkList").value;
@@ -818,30 +1058,22 @@ async function renderDiscover(seq) {
     save(); renderRail();
     setStatus(`Added ${added} wallet${added === 1 ? "" : "s"} to ${store.lists[listId].name}`);
   };
-  setStatus(`${rows.length} wallets`);
+  wireSort("discover");
+  setStatus(`${uni.rows.length} traders`);
 }
 
-async function fillReturnColumn(rows, seq) {
-  try {
-    const other = ui.lbMetric === "profit" ? "volume" : "profit";
-    const list = await getJSON(`${LB}/${other}?window=${ui.lbWindow}&limit=500`, { ttl: 300000 });
-    if (stale(seq)) return;
-    const map = new Map((Array.isArray(list) ? list : [])
-      .map(r => [(r.proxyWallet || "").toLowerCase(), Number(r.amount) || 0]));
-    const cells = $content.querySelectorAll("tbody tr");
-    rows.forEach((r, i) => {
-      const cell = cells[i] && cells[i].children[3];
-      if (!cell) return;
-      const otherVal = map.get(r.address);
-      if (otherVal == null || otherVal === 0) { cell.textContent = "—"; return; }
-      const profit = ui.lbMetric === "profit" ? r.amount : otherVal;
-      const volume = ui.lbMetric === "profit" ? otherVal : r.amount;
-      if (!volume) { cell.textContent = "—"; return; }
-      const roi = profit / volume;
-      cell.textContent = fmtPct(roi, 1);
-      cell.className = "num " + (roi >= 0 ? "pos" : "neg");
-    });
-  } catch (e) { /* Return column simply stays blank — not worth failing the page */ }
+/* A dash for a missing figure, never a zero. */
+function money(v, dimmed) {
+  if (v == null) return `<td class="num dim">—</td>`;
+  const cls = dimmed ? "dim" : (v >= 0 ? "pos" : "neg");
+  return `<td class="num ${cls}">${fmtUsd(v)}</td>`;
+}
+
+/* Re-rendering on every keystroke refetches nothing (the cache holds) but does
+   rebuild a 300-row table, which stutters while typing. */
+function debounce(fn, ms) {
+  let t;
+  return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
 }
 
 /* ---------- Members ---------- */
@@ -919,6 +1151,7 @@ async function renderListView(seq) {
 
   const cur = curSort("holdings", "share");
   const rows = sortRows(hold.rows, cur.key, cur.dir, "share");
+  lastPositions = new Map(hold.rows.map(r => [r.asset, r]));
   const totalPnl = hold.rows.reduce((s, r) => s + r.pnl, 0);
   const multi = hold.rows.filter(r => r.consensus >= 2).length;
 
@@ -956,9 +1189,10 @@ async function renderListView(seq) {
           ${th("Now", "curPrice", cur)}
           ${th("Drift", "drift", cur)}
           ${th("P&L", "pnl", cur)}
+          <th></th>
         </tr></thead>
         <tbody>${rows.map(r => `
-          <tr>
+          <tr class="clickable" tabindex="0" data-detail="${esc(r.asset)}">
             ${marketCell(r)}
             ${outcomeCell(r.outcome)}
             ${meter(r.share)}
@@ -968,6 +1202,7 @@ async function renderListView(seq) {
             <td class="num">${fmtCents(r.curPrice)}</td>
             <td class="num ${r.drift >= 0 ? "pos" : "neg"}">${r.drift >= 0 ? "+" : ""}${(r.drift * 100).toFixed(1)}¢</td>
             <td class="num ${r.pnl >= 0 ? "pos" : "neg"}">${fmtUsd(r.pnl)}</td>
+            <td class="num chev">&rsaquo;</td>
           </tr>`).join("")}</tbody>
       </table></div>
     </div>
@@ -1048,6 +1283,7 @@ function renderFlow(l, seq) {
 
 function renderSignals(l, hold, failed) {
   const sigs = buildSignals(hold);
+  lastPositions = new Map(hold.rows.map(r => [r.asset, r]));
   $content.innerHTML = `
     ${weightToolbar(true)}
     <div class="note">
@@ -1073,10 +1309,10 @@ function renderSignals(l, hold, failed) {
           <th class="num">#</th><th>Market</th><th>Side</th>
           <th class="num">Wallets</th><th class="num">Share</th>
           <th class="num">They paid</th><th class="num">Now</th>
-          <th class="num">vs entry</th><th>Read</th>
+          <th class="num">vs entry</th><th>Read</th><th></th>
         </tr></thead>
         <tbody>${sigs.slice(0, 40).map((r, i) => `
-          <tr>
+          <tr class="clickable" tabindex="0" data-detail="${esc(r.asset)}">
             <td class="num dim">${i + 1}</td>
             ${marketCell(r)}
             ${outcomeCell(r.outcome)}
@@ -1086,6 +1322,7 @@ function renderSignals(l, hold, failed) {
             <td class="num">${fmtCents(r.curPrice)}</td>
             <td class="num ${r.entryRoom >= 0 ? "pos" : "neg"}">${r.entryRoom >= 0 ? "+" : ""}${fmtPct(r.entryRoom, 0)}</td>
             <td>${readPill(r)}</td>
+            <td class="num chev">&rsaquo;</td>
           </tr>`).join("")}</tbody>
       </table></div>
     </div>`}`;
@@ -1103,6 +1340,185 @@ function readPill(r) {
   if (r.entryRoom > -0.25)
     return `<span class="pill pill-other">moved up</span>`;
   return `<span class="pill pill-warn">move already happened</span>`;
+}
+
+/* ============================================================
+   position drill-down
+
+   The aggregate row says five wallets agree. That is the least interesting part
+   of the fact: which five, how much each committed, what each paid, and whether
+   they bought together or drifted in over a month are what make it worth acting
+   on — or not.
+   ============================================================ */
+let lastPositions = new Map();        // asset -> aggregated row, for the sheet
+const tradeCache = new Map();         // asset -> trades, so reopening is instant
+const DETAIL_DAYS = 30;
+
+async function ensureUniverse() {
+  if (universe) return universe;
+  try {
+    const uni = await loadLeaderboardUniverse();
+    universe = new Map(uni.rows.map(r => [r.address, r]));
+  } catch (e) { universe = new Map(); }   // P&L column simply stays blank
+  return universe;
+}
+
+function openDetail(asset) {
+  const r = lastPositions.get(asset);
+  if (!r) return;
+
+  const holders = [...r.holders].sort((a, b) => b.value - a.value);
+  const href = r.eventSlug ? `https://polymarket.com/event/${encodeURIComponent(r.eventSlug)}`
+                           : "https://polymarket.com";
+  const days = r.endDate
+    ? Math.ceil((new Date(r.endDate).getTime() - Date.now()) / 86400000) : null;
+
+  const back = document.createElement("div");
+  back.className = "sheet-back";
+  back.innerHTML = `
+    <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(r.title || "Position")}">
+      <div class="sheet-head">
+        <div class="top">
+          ${pill(r.outcome)}
+          <span class="pill pill-other">${r.holders.length} wallet${r.holders.length === 1 ? "" : "s"}</span>
+          <button class="sheet-close" id="sheetClose" aria-label="Close">&times;</button>
+        </div>
+        <h2>${esc(r.title || "Untitled market")}</h2>
+      </div>
+      <div class="sheet-body">
+        <div class="tiles">
+          ${tile("Total value", fmtUsd(r.value))}
+          ${tile("Price", fmtCents(r.curPrice))}
+          ${tile("Avg entry", fmtCents(r.avgEntry))}
+          ${tile("Days left", days == null ? "—" : days < 0 ? "ended" : String(days))}
+        </div>
+        <a class="sheet-link" href="${href}" target="_blank" rel="noopener noreferrer">
+          View on Polymarket &rarr;</a>
+
+        <div class="sheet-sec">
+          <h3>Wallet breakdown <span class="c">who holds it, and what they paid</span></h3>
+          ${holders.map(h => {
+            const u = universe && universe.get(h.address);
+            const all = u && u.pAll != null ? u.pAll : null;
+            return `<div class="hold-row">
+              ${avatar({ name: h.name, address: h.address, avatar: u && u.avatar }, true)}
+              <span class="id">
+                <span class="nm">${esc(h.name || short(h.address))}</span>
+                <span class="pl ${all == null ? "dim" : all >= 0 ? "pos" : "neg"}"
+                      data-pl="${esc(h.address)}">${
+                  all == null ? esc(short(h.address))
+                              : (all >= 0 ? "+" : "") + fmtUsd(all) + " all-time"}</span>
+              </span>
+              <span class="nums">
+                <span>${fmtNum(h.size)} shares</span>
+                <span>avg ${fmtCents(h.avgPrice)}</span>
+                <b>${fmtUsd(h.value)}</b>
+                <button class="copy" data-copy="${esc(h.address)}" title="Copy address">⧉</button>
+              </span>
+            </div>`;
+          }).join("")}
+        </div>
+
+        <div class="sheet-sec" id="tradeSec">
+          <h3>When they traded it <span class="c">last ${DETAIL_DAYS} days</span></h3>
+          <div class="skel">Loading trades…</div>
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(back);
+  document.body.style.overflow = "hidden";
+
+  const close = () => {
+    back.remove();
+    document.body.style.overflow = "";
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = e => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", onKey);
+  back.onclick = e => { if (e.target === back) close(); };
+  back.querySelector("#sheetClose").onclick = close;
+  back.querySelector("#sheetClose").focus();
+
+  loadTrades(r, holders).then(trades => {
+    const sec = back.querySelector("#tradeSec");
+    if (!sec) return;                       // sheet closed while fetching
+    sec.innerHTML = renderTrades(r, holders, trades);
+  });
+
+  // Reached Signals without passing through Discover: paint now, fill each
+  // holder's all-time P&L in when the leaderboards arrive.
+  if (!universe) {
+    ensureUniverse().then(() => {
+      back.querySelectorAll("[data-pl]").forEach(el => {
+        const u = universe.get(el.dataset.pl);
+        if (!u || u.pAll == null) return;
+        el.textContent = (u.pAll >= 0 ? "+" : "") + fmtUsd(u.pAll) + " all-time";
+        el.className = "pl " + (u.pAll >= 0 ? "pos" : "neg");
+      });
+    });
+  }
+}
+
+/* Only the wallets that actually hold this position get queried, and the window
+   start is rounded to 5 minutes so reopening the sheet hits the cache instead of
+   generating a fresh URL every second. */
+async function loadTrades(r, holders) {
+  if (tradeCache.has(r.asset)) return tradeCache.get(r.asset);
+  const start = Math.floor((Date.now() / 1000 - DETAIL_DAYS * 86400) / 300) * 300;
+  const per = await mapLimit(holders, 4, async h => {
+    const rows = await getJSON(
+      `${DATA}/activity?user=${h.address}&limit=500&type=TRADE&start=${start}&sortDirection=DESC`,
+      { ttl: 300000 });
+    return (Array.isArray(rows) ? rows : [])
+      .filter(t => t.asset === r.asset)
+      .map(t => ({ ...t, who: h.name || short(h.address), address: h.address }));
+  });
+  const flat = per.filter(Array.isArray).flat()
+    .sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
+  tradeCache.set(r.asset, flat);
+  return flat;
+}
+
+function renderTrades(r, holders, trades) {
+  const head = `<h3>When they traded it <span class="c">last ${DETAIL_DAYS} days</span></h3>`;
+  if (!trades.length) {
+    // An empty list here does NOT mean they never traded it — the activity feed
+    // only reaches back 30 days, and these are long-held positions by definition.
+    return head + `<div class="skel">No trades in the last ${DETAIL_DAYS} days.
+      These wallets still hold the position, so they opened it earlier than this
+      window reaches.</div>`;
+  }
+  const bought = trades.filter(t => t.side !== "SELL")
+    .reduce((s, t) => s + (Number(t.usdcSize) || 0), 0);
+  const sold = trades.filter(t => t.side === "SELL")
+    .reduce((s, t) => s + (Number(t.usdcSize) || 0), 0);
+  return head + `
+    <div class="skel" style="padding-bottom:6px">
+      ${trades.length} trade${trades.length === 1 ? "" : "s"} ·
+      <span class="pos">${fmtUsd(bought)} bought</span> ·
+      <span class="neg">${fmtUsd(sold)} sold</span>
+    </div>
+    ${trades.slice(0, 60).map(t => {
+      const sell = t.side === "SELL";
+      return `<div class="trade-row">
+        <span class="nm">${esc(t.who)}</span>
+        <span class="pill ${sell ? "pill-no" : "pill-yes"}">${sell ? "SELL" : "BUY"}</span>
+        <span class="amt">${fmtNum(Number(t.size) || 0)} @ ${fmtCents(Number(t.price) || 0)}</span>
+        <span class="amt dim">${fmtUsd(Number(t.usdcSize) || 0)}</span>
+        <span class="when">${ago(Number(t.timestamp) || 0)} ago</span>
+      </div>`;
+    }).join("")}
+    ${trades.length > 60 ? `<div class="skel">Showing the 60 most recent of ${trades.length}.</div>` : ""}`;
+}
+
+function pill(o) {
+  const t = String(o || "").toLowerCase();
+  const cls = t === "yes" ? "pill-yes" : t === "no" ? "pill-no" : "pill-other";
+  return `<span class="pill ${cls}">${esc(o || "?")}</span>`;
+}
+function tile(k, v) {
+  return `<div class="tile"><span class="k">${esc(k)}</span><span class="v">${esc(v)}</span></div>`;
 }
 
 function weightToolbar(withThreshold = false) {
@@ -1166,7 +1582,14 @@ function addWallet(listId, address, name) {
 document.querySelectorAll(".tab").forEach(t => {
   t.onclick = () => { view = t.dataset.view; render(); };
 });
-document.getElementById("refresh").onclick = () => { cache.clear(); render(); };
+document.getElementById("refresh").onclick = () => {
+  // Refresh has to mean refresh — the drill-down keeps its own caches, and
+  // leaving them behind would hand back yesterday's trades under new numbers.
+  cache.clear();
+  tradeCache.clear();
+  universe = null;
+  render();
+};
 
 document.getElementById("newList").onclick = () => {
   const name = prompt("Name this list", "New list");
@@ -1195,8 +1618,16 @@ document.getElementById("addForm").onsubmit = e => {
   render();
 };
 
-/* delegated clicks: list switch, add-from-leaderboard, remove member */
+/* delegated clicks: list switch, add-from-leaderboard, remove member, drill-down */
 document.addEventListener("click", e => {
+  const copy = e.target.closest("[data-copy]");
+  if (copy) {
+    navigator.clipboard.writeText(copy.dataset.copy)
+      .then(() => { copy.textContent = "✓"; setTimeout(() => { copy.textContent = "⧉"; }, 1200); })
+      .catch(() => setStatus("Clipboard blocked by browser"));
+    return;
+  }
+
   const li = e.target.closest("[data-list]");
   if (li) { store.activeId = li.dataset.list; save(); render(); return; }
 
@@ -1214,9 +1645,24 @@ document.addEventListener("click", e => {
     const l = activeList();
     l.wallets = l.wallets.filter(w => w.address !== rm.dataset.rm);
     save(); render();
+    return;
   }
+
+  // Last, so a click on a button inside a row is handled as that button.
+  const row = e.target.closest("[data-detail]");
+  if (row && !e.target.closest("a, button")) openDetail(row.dataset.detail);
 });
 
+/* Rows are focusable, so they answer the keyboard too. */
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const row = e.target.closest && e.target.closest("[data-detail]");
+  if (!row) return;
+  e.preventDefault();
+  openDetail(row.dataset.detail);
+});
+
+wireTheme();
 render();
 </script>
 </body>
